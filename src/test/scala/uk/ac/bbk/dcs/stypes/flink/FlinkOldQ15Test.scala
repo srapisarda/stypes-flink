@@ -34,7 +34,7 @@ class FlinkOldQ15Test extends FunSpec with BaseFlinkTest {
   describe("Flink TEST3") {
 
 
-    it("should read and execute the 'Bolzano' query rewrote for 1.ffl file set {A, B, R, S}") {
+    ignore("should read and execute the 'Bolzano' query rewrote for 1.ffl file set {A, B, R, S}") {
       execute(1, 2000)
     }
 
