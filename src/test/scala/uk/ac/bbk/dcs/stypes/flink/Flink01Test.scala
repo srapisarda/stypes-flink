@@ -1,4 +1,4 @@
-package uk.ac.bbk.dcs.stypes.flink.flink
+package uk.ac.bbk.dcs.stypes.flink
 
 /*
  * #%L
@@ -20,47 +20,83 @@ package uk.ac.bbk.dcs.stypes.flink.flink
  * #L%
  */
 
-import java.util.Date
+import java.util.UUID
 
+import org.apache.flink.api.common.typeinfo.TypeInformation
+import org.apache.flink.api.scala._
+import org.apache.flink.configuration.Configuration
 import org.scalatest.FunSpec
 
 /**
   * Created by salvo on 01/01/2018.
   */
-class FlinkOldQ15Test extends FunSpec with BaseFlinkTest {
+class Flink01Test extends FunSpec {
+
+  private val pathToBenchmarkNDL_SQL = "src/test/resources/benchmark/NDL-SQL"
+
+  val conf = new Configuration()
+  //conf.setInteger("taskmanager.network.numberOfBuffers", 16000)
+  conf.setInteger("taskmanager.numberOfTaskSlots",4)
+
+  private val env = ExecutionEnvironment.createLocalEnvironment(conf)
+
+  env.setParallelism(4)
+
+
+  //private val env = ExecutionEnvironment.§getExecutionEnvironment
 
 
 
-  describe("Flink TEST3") {
+  private implicit val typeLongInfo: TypeInformation[(Long, Long)] = TypeInformation.of(classOf[(Long, Long)])
+
+  private implicit val typeRelation2Info: TypeInformation[Relation2] = TypeInformation.of(classOf[Relation2])
+
+  case class Relation2( x:Long, y:Long )
+
+  private  def  longMapper: (String) => (Long, Long) = (p: String) => {
+    val line = p.split(',')
+    (line.head.toLong, line.last.toLong)
+  }
+
+  private  def  stringMapper1: (String) => (String) = (p: String) => {
+    val line = p.split(',')
+    line.head
+  }
+
+   private  def  stringMapper: (String) => (String, String) = (p: String) => {
+    val line = p.split(',')
+    (line.head, line.last)
+  }
+
+  private  def  stringMapper3: (String) => (String, String, String) = (p: String) => {
+    val line = p.split(',')
+    (line(0), line(1), line(2))
+  }
+
+  private  def  stringMapper4: (String) => (String, String, String, String) = (p: String) => {
+    val line = p.split(',')
+    (line(0), line(1), line(2), line(3))
+  }
 
 
-    it("should read and execute the 'Bolzano' query rewrote for 1.ffl file set {A, B, R, S}") {
-      execute(1, 2000)
-    }
+  private  def  rel2Mapper: (String) => Relation2 = (p: String) => {
+    val line = p.split(',')
+    Relation2(line.head.toLong, line.last.toLong)
+  }
+  private val a = env.readTextFile(s"$pathToBenchmarkNDL_SQL/data/20mb-a.txt").map(stringMapper)
+  private val b: DataSet[(String, String)] = env.readTextFile(s"$pathToBenchmarkNDL_SQL/data/20mb-b.txt").map(stringMapper)
+  private val r: DataSet[(String, String)] = env.readTextFile(s"$pathToBenchmarkNDL_SQL/data/20mb-r.txt").map(stringMapper)
+  private val s: DataSet[(String, String)] = env.readTextFile(s"$pathToBenchmarkNDL_SQL/data/20mb-s.txt").map(stringMapper)
 
-    ignore("should read and execute the 'Bolzano' query rewrote for 2.ffl file set {A, B, R, S}") {
-      execute(2, 0)
-    }
 
-    ignore("should read and execute the 'Bolzano' query rewrote for 3.ffl file set {A, B, R, S}") {
-      execute(3, 0)
-    }
+  private def myJoin( firstRelation: DataSet[(String, String)], secondRelation: DataSet[(String, String)] ) ={
+    firstRelation.join(secondRelation).where(1).equalTo(0).map(p=> (p._1._1, p._2._2 ))
+  }
 
-    ignore("should read and execute the 'Bolzano' query rewrote for 4.ffl file set {A, B, R, S}") {
-      execute(4, 12165)
-    }
 
-    ignore("should read and execute the 'Bolzano' query rewrote for 5.ffl file set {A, B, R, S}") {
-      execute(5, 46636)
-    }
+  describe("Flink TESTS") {
 
-    def execute( fileNumber:Int,  expected:Int):Unit = {
-
-      val a = getA(fileNumber)
-      val b = getB(fileNumber)
-      val r = getR(fileNumber)
-      val s = getS(fileNumber)
-
+    ignore("should read execute the rewriting 01 selected") {
 
       //<P-0-1> (?X,?Y) :- <R> (?X, ?Y) .
       lazy val p0_1 = r
@@ -168,12 +204,14 @@ class FlinkOldQ15Test extends FunSpec with BaseFlinkTest {
 
       val p0_15_distinct = p0_15.distinct()
 
-      p0_15_distinct.writeAsCsv(s"$pathToBenchmarkNDL_SQL/data/rewriting-results-01-${new Date().getTime}")
+      p0_15_distinct.writeAsCsv(s"$pathToBenchmarkNDL_SQL/data/rewriting-results-01-${UUID.randomUUID()}")
 
       val count = p0_15_distinct.count
       println(s"p0_15.distinct.count: $count")
 
-      assert( count == expected)
+      assert( 12165 == count)
+
+
     }
 
   }

@@ -1,4 +1,4 @@
-package uk.ac.bbk.dcs.stypes.flink.flink
+package uk.ac.bbk.dcs.stypes.flink
 
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.scala._

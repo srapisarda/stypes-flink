@@ -1,4 +1,4 @@
-package uk.ac.bbk.dcs.stypes.flink.flink
+package uk.ac.bbk.dcs.stypes.flink
 
 /*
  * #%L
@@ -41,7 +41,7 @@ class FlinkQ27Test extends FunSpec with BaseFlinkTest{
   describe("Flink q27") {
 
 
-    it("should read and execute the 'q27.cq' query rewrote for 1.ffl file set {A, B, R, S}") {
+    ignore("should read and execute the 'q27.cq' query rewrote for 1.ffl file set {A, B, R, S}") {
       execute(1, 2832)
     }
 
