@@ -1,4 +1,4 @@
-name := "stype-flink"
+name := "stypes-flink"
 
 version := "1.0"
 
