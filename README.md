@@ -1,4 +1,4 @@
-# stypes-flink
+# STypeS-Flink
 
 It is possible to evaluate [**STypeS NDL rewriting**](https://github.com/srapisarda/stypes) using Apache Flink.
 It is easy to write an Apache Flink program. If, for example, we are taking into consideration the following NDL script:
