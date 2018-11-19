@@ -9,9 +9,9 @@ import org.apache.flink.api.scala.DataSet
 object EmptyConsistency extends BaseFlinkRewriting {
   def main(args: Array[String]): Unit = {
     if (args.length > 1)
-      FlinkRewriting4q15.run(args(0).toInt, args(1))
+      EmptyConsistency.run(args(0).toInt, args(1))
     else
-      FlinkRewriting4q15.run(args(0).toInt)
+      EmptyConsistency.run(args(0).toInt)
   }
 
   def run(fileNumber: Int, serial: String = UUID.randomUUID().toString): Unit = {
