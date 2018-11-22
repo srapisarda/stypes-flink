@@ -24,6 +24,8 @@ import java.util.Date
 
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.scala._
+import org.apache.flink.table.api.{Table, Types}
+import org.apache.flink.table.sources.CsvTableSource
 import org.slf4j.{Logger, LoggerFactory}
 
 /**
@@ -84,25 +86,62 @@ trait BaseFlinkRewriting {
     ds
   }
 
+  private def getFilePath(fileNumber: Int, name: String) : String =
+    s"$pathToBenchmarkNDL_SQL/data/csv/$fileNumber.ttl-$name.csv"
 
   def getA(fileNumber: Int): DataSet[(String, String)] =
-    env.readTextFile(s"$pathToBenchmarkNDL_SQL/data/csv/$fileNumber.ttl-A.csv").map(stringMapper)
+    env.readTextFile(getFilePath(fileNumber, "A")).map(stringMapper)
 
   def getB(fileNumber: Int): DataSet[(String, String)] =
-    env.readTextFile(s"$pathToBenchmarkNDL_SQL/data/csv/$fileNumber.ttl-B.csv").map(stringMapper)
+    env.readTextFile(getFilePath(fileNumber, "B")).map(stringMapper)
 
   def getR(fileNumber: Int): DataSet[(String, String)] =
-    env.readTextFile(s"$pathToBenchmarkNDL_SQL/data/csv/$fileNumber.ttl-R.csv").map(stringMapper)
+    env.readTextFile(getFilePath(fileNumber, "R")).map(stringMapper)
 
   def getS(fileNumber: Int): DataSet[(String, String)] =
-    env.readTextFile(s"$pathToBenchmarkNDL_SQL/data/csv/$fileNumber.ttl-S.csv").map(stringMapper)
+    env.readTextFile(getFilePath(fileNumber, "S")).map(stringMapper)
 
+  def getDataSourceR(fileNumber: Int): CsvTableSource = createDataSource(fileNumber, "R")
 
-  def execute(fileNumber: Int, serial: String, qName: String, f: (Int) => DataSet[(String, String)]): Unit = {
+  def getDataSourceS(fileNumber: Int): CsvTableSource = createDataSource(fileNumber, "S")
+
+  private def createDataSource(fileNumber: Int, name:String)=
+    CsvTableSource.builder()
+      .path(getFilePath(fileNumber, name))
+      .fieldDelimiter(",")
+      .field("X", Types.STRING)
+      .field("Y", Types.STRING)
+      .build()
+
+  def execute(fileNumber: Int, serial: String, qName: String, f: Int => DataSet[(String, String)]): Unit = {
     val startTime = System.nanoTime()
     distinctSink(f.apply(fileNumber), fileNumber, serial, startTime, qName)
   }
 
+  def executeAsTable(fileNumber: Int, serial: String, qName: String, f: Int => Table): Unit = {
+    val startTime = System.nanoTime()
+    distinctTableSink(f.apply(fileNumber), fileNumber, serial, startTime, qName)
+  }
+
+  def distinctTableSink(p1: Table , fileNumber: Int, serial: String, startTime: Long, qName: String): Unit = {
+    val p1_distinct = p1.distinct()
+
+
+    val postfix = s"ttl-$fileNumber-par-${env.getParallelism}-${new Date().getTime}"
+    val resultPath = s"$pathToBenchmarkNDL_SQL/data/results/$qName/$serial/results-$postfix"
+//    p1_distinct.writeAsCsv(resultPath)
+//
+//    val count: Long = p1_distinct.count
+//    val elapsed = (System.nanoTime() - startTime) / 1000000
+//    log.info(s"elapsed time for $postfix is: $elapsed")
+//
+//    val qe: DataSet[String] = env.fromElements(fileNumber.toString, env.getParallelism.toString, elapsed.toString, count.toString, resultPath)
+//    qe.writeAsText(s"$pathToBenchmarkNDL_SQL/data/results/$qName/$serial/result-$postfix-txt")
+//
+//    val count2: Long = p1_distinct.count
+//
+//    log.info(s"p1_distinct count: $count, $count2")
+  }
 
   def distinctSink(p1: DataSet[(String, String)], fileNumber: Int, serial: String, startTime: Long, qName: String): Unit = {
     val p1_distinct = p1.distinct()
