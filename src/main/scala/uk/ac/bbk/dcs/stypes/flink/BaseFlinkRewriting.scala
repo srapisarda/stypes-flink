@@ -125,22 +125,8 @@ trait BaseFlinkRewriting {
 
   def distinctTableSink(p1: Table , fileNumber: Int, serial: String, startTime: Long, qName: String): Unit = {
     val p1_distinct = p1.distinct()
-
-
     val postfix = s"ttl-$fileNumber-par-${env.getParallelism}-${new Date().getTime}"
     val resultPath = s"$pathToBenchmarkNDL_SQL/data/results/$qName/$serial/results-$postfix"
-//    p1_distinct.writeAsCsv(resultPath)
-//
-//    val count: Long = p1_distinct.count
-//    val elapsed = (System.nanoTime() - startTime) / 1000000
-//    log.info(s"elapsed time for $postfix is: $elapsed")
-//
-//    val qe: DataSet[String] = env.fromElements(fileNumber.toString, env.getParallelism.toString, elapsed.toString, count.toString, resultPath)
-//    qe.writeAsText(s"$pathToBenchmarkNDL_SQL/data/results/$qName/$serial/result-$postfix-txt")
-//
-//    val count2: Long = p1_distinct.count
-//
-//    log.info(s"p1_distinct count: $count, $count2")
   }
 
   def distinctSink(p1: DataSet[(String, String)], fileNumber: Int, serial: String, startTime: Long, qName: String): Unit = {

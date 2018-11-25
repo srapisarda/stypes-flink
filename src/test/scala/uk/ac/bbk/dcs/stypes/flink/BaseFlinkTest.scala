@@ -1,8 +1,13 @@
 package uk.ac.bbk.dcs.stypes.flink
 
+import java.util.Date
+
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.scala._
 import org.apache.flink.configuration.Configuration
+import org.apache.flink.table.api.scala.BatchTableEnvironment
+import org.apache.flink.table.api.{Table, TableEnvironment, Types}
+import org.apache.flink.table.sources.CsvTableSource
 
 /**
   * Created by salvo on 16/07/2018.
@@ -15,7 +20,7 @@ trait BaseFlinkTest {
   val conf = new Configuration()
   conf.setInteger("taskmanager.numberOfTaskSlots", 4)
 
-  val env = ExecutionEnvironment.createLocalEnvironment(conf)
+  val env: ExecutionEnvironment = ExecutionEnvironment.createLocalEnvironment(conf)
 
   env.setParallelism(1)
 
@@ -57,7 +62,7 @@ trait BaseFlinkTest {
   }
 
   def myJoin(firstRelation: DataSet[(String, String)], secondRelation: DataSet[(String, String)]) = {
-      firstRelation.join(secondRelation).where(1).equalTo(0).map(p => (p._1._1, p._2._2))
+    firstRelation.join(secondRelation).where(1).equalTo(0).map(p => (p._1._1, p._2._2))
   }
 
   def switchTerms(relation: DataSet[(String, String)]) = relation.map(p => (p._2, p._1))
@@ -68,15 +73,32 @@ trait BaseFlinkTest {
   }
 
   def getA(fileNumber: Int): DataSet[(String, String)] =
-    env.readTextFile(s"$pathToBenchmarkNDL_SQL/data/csv/${fileNumber}.ttl-A.csv").map(stringMapper)
+    env.readTextFile(getFilePath(fileNumber, "A")).map(stringMapper)
 
   def getB(fileNumber: Int): DataSet[(String, String)] =
-    env.readTextFile(s"$pathToBenchmarkNDL_SQL/data/csv/${fileNumber}.ttl-B.csv").map(stringMapper)
+    env.readTextFile(getFilePath(fileNumber, "B")).map(stringMapper)
 
   def getR(fileNumber: Int): DataSet[(String, String)] =
-    env.readTextFile(s"$pathToBenchmarkNDL_SQL/data/csv/${fileNumber}.ttl-R.csv").map(stringMapper)
+    env.readTextFile(getFilePath(fileNumber, "R")).map(stringMapper)
 
   def getS(fileNumber: Int): DataSet[(String, String)] =
-    env.readTextFile(s"$pathToBenchmarkNDL_SQL/data/csv/${fileNumber}.ttl-S.csv").map(stringMapper)
+    env.readTextFile(getFilePath(fileNumber, "S")).map(stringMapper)
+
+
+  def getDataSourceR(fileNumber: Int): CsvTableSource = createDataSource(fileNumber, "R")
+
+  def getDataSourceS(fileNumber: Int): CsvTableSource = createDataSource(fileNumber, "S")
+
+  private def createDataSource(fileNumber: Int, name: String) =
+    CsvTableSource.builder()
+      .path(getFilePath(fileNumber, name))
+      .fieldDelimiter(",")
+      .field("X", Types.STRING)
+      .field("Y", Types.STRING)
+      .build()
+
+  private def getFilePath(fileNumber: Int, name: String): String =
+    s"$pathToBenchmarkNDL_SQL/data/csv/$fileNumber.ttl-$name.csv"
+
 
 }
