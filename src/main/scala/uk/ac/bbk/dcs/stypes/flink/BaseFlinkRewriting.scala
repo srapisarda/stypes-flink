@@ -38,7 +38,8 @@ trait BaseFlinkRewriting {
 
   val log: Logger = LoggerFactory.getLogger(this.getClass)
   val env: ExecutionEnvironment = ExecutionEnvironment.getExecutionEnvironment
-  val pathToBenchmarkNDL_SQL = "hdfs:///user/hduser/stypes/resources/benchmark/Lines"
+//  val pathToBenchmarkNDL_SQL = "hdfs:///user/hduser/stypes/resources/benchmark/Lines"
+  val pathToBenchmarkNDL_SQL = "src/test/resources/benchmark/Lines"
   implicit val typeLongInfo: TypeInformation[(Long, Long)] = TypeInformation.of(classOf[(Long, Long)])
   implicit val typeRelation2Info: TypeInformation[Relation2] = TypeInformation.of(classOf[Relation2])
 
@@ -105,7 +106,7 @@ trait BaseFlinkRewriting {
 
   def getDataSourceS(fileNumber: Int): CsvTableSource = createDataSource(fileNumber, "S")
 
-  private def createDataSource(fileNumber: Int, name:String)=
+  private def createDataSource(fileNumber: Int, name:String): CsvTableSource =
     CsvTableSource.builder()
       .path(getFilePath(fileNumber, name))
       .fieldDelimiter(",")
@@ -113,7 +114,7 @@ trait BaseFlinkRewriting {
       .field("Y", Types.STRING)
       .build()
 
-  def execute(fileNumber: Int, serial: String, qName: String, f: Int => DataSet[(String, String)]): Unit = {
+  def   execute(fileNumber: Int, serial: String, qName: String, f: Int => DataSet[(String, String)]): Unit = {
     val startTime = System.nanoTime()
     distinctSink(f.apply(fileNumber), fileNumber, serial, startTime, qName)
   }

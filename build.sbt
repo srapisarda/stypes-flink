@@ -4,7 +4,7 @@ version := "1.0"
 
 scalaVersion := "2.11.8"
 
-val flinkVersion = "1.6.2"
+val flinkVersion = "1.7.0"
 
 
 libraryDependencies ++= Seq(

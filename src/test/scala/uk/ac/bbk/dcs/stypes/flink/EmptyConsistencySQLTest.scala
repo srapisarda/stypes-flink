@@ -1,31 +1,47 @@
 package uk.ac.bbk.dcs.stypes.flink
 
+import org.apache.calcite.rel.rules.{JoinAssociateRule, JoinCommuteRule}
+import org.apache.calcite.tools.{RuleSet, RuleSets}
+import org.apache.flink.api.common.io.FileInputFormat.FileBaseStatistics
 import org.apache.flink.api.scala.DataSet
-import org.apache.flink.table.api.{Table, TableEnvironment}
+import org.apache.flink.table.api.{Table, TableConfig, TableEnvironment}
 import org.apache.flink.table.api.scala.BatchTableEnvironment
 import org.apache.flink.types.Row
 import org.scalatest.FunSpec
 import org.apache.flink.api.scala._
+import org.apache.flink.client.program.ClusterClient
+import org.apache.flink.table.calcite.CalciteConfigBuilder
 
 /**
   * Created by salvo on 19/11/2018.
   */
 class EmptyConsistencySQLTest extends FunSpec with BaseFlinkTest {
+  val calciteConfigBuilder = new CalciteConfigBuilder()
+  val ruleSets: RuleSet = RuleSets.ofList(JoinCommuteRule.INSTANCE, JoinAssociateRule.INSTANCE)
+  calciteConfigBuilder.addLogicalOptRuleSet(ruleSets)
+  val tableConfig: TableConfig = new TableConfig()
+  tableConfig.setCalciteConfig(calciteConfigBuilder.build())
+  private val tableEnv: BatchTableEnvironment = TableEnvironment.getTableEnvironment(env, tableConfig )
 
-  private val tableEnv: BatchTableEnvironment = TableEnvironment.getTableEnvironment(env)
   private val fileNumber = 1
   tableEnv.registerTableSource("R", getDataSourceR(fileNumber))
   tableEnv.registerTableSource("S", getDataSourceS(fileNumber))
   private lazy val r = tableEnv.scan("R")
   private lazy val s = tableEnv.scan("S")
+//  private val rTableSet = tableEnv.toDataSet[Row](r)
+//  private val sTableSet = tableEnv.toDataSet[Row](s)
+
 
   describe("Flink SQL  Empty test") {
 
     it("should read and execute the EmptyConsistencySQL for query q(x1,x4) <- R(x1,x2), R(x2,x3), S(x3,x4)") {
 
+      val table = r.as("x1, x2").join(r.as("x3, x4")).where("x2 === x3").select("x1, x4")
+        .join(s.as("x5, x6")).where("x4 === x5 ").select("x1, x6")
+
       val result = executeAsTable(1, "test", "empty-consistency", _ => {
-        r.as("x1, x2").join(r.as("x3, x4")).where("x2 === x4").select("x1, x3")
-          .join(s.as("x5, x6")).where("x3 === x5 ").select("x1, x6")
+        r.as("x1, x2").join(r.as("x3, x4")).where("x2 === x3").select("x1, x4")
+          .join(s.as("x5, x6")).where("x4 === x5 ").select("x1, x6")
       })
 
       assert(result.count() == 0)
@@ -34,8 +50,8 @@ class EmptyConsistencySQLTest extends FunSpec with BaseFlinkTest {
 
     it("should read and execute the EmptyConsistencySQL  query for the sets {q(x1,x4) <- S(x1,x2), R(x2,x3), R(x3,x4)") {
       val result = executeAsTable(1, "test", "empty-consistency", _ => {
-        s.as("x1, x2").join(r.as("x3, x4")).where("x2 === x4").select("x1, x3")
-          .join(r.as("x5, x6")).where("x3 === x5 ").select("x1, x6")
+        s.as("x1, x2").join(r.as("x3, x4")).where("x2 === x3").select("x1, x4")
+          .join(r.as("x5, x6")).where("x4 === x5 ").select("x1, x6")
       })
 
       assert(result.count() == 0)
@@ -53,12 +69,17 @@ class EmptyConsistencySQLTest extends FunSpec with BaseFlinkTest {
   private def distinctTableSink(p1: Table, fileNumber: Int, serial: String, startTime: Long, qName: String): DataSet[Row] = {
     val p1_distinct = p1.distinct()
 
+    val explanation: String = tableEnv.explain(p1_distinct)
+
+    println(explanation)
+
     p1.groupBy("x1").select("x1.count")
 
     val count: Table =
       p1_distinct
         .groupBy("x1")
         .select("x1 as cnt")
+
 
     val result: DataSet[Row] = tableEnv.toDataSet[Row](count)
 
