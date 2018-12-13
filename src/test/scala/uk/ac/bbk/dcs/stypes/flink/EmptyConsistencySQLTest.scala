@@ -1,35 +1,33 @@
 package uk.ac.bbk.dcs.stypes.flink
 
-import org.apache.calcite.rel.rules.{JoinAssociateRule, JoinCommuteRule}
+import org.apache.calcite.rel.rules._
 import org.apache.calcite.tools.{RuleSet, RuleSets}
-import org.apache.flink.api.common.io.FileInputFormat.FileBaseStatistics
-import org.apache.flink.api.scala.DataSet
-import org.apache.flink.table.api.{Table, TableConfig, TableEnvironment}
+import org.apache.flink.api.scala.{DataSet, _}
 import org.apache.flink.table.api.scala.BatchTableEnvironment
+import org.apache.flink.table.api.{Table, TableConfig, TableEnvironment}
+import org.apache.flink.table.calcite.CalciteConfigBuilder
 import org.apache.flink.types.Row
 import org.scalatest.FunSpec
-import org.apache.flink.api.scala._
-import org.apache.flink.client.program.ClusterClient
-import org.apache.flink.table.calcite.CalciteConfigBuilder
 
 /**
   * Created by salvo on 19/11/2018.
   */
 class EmptyConsistencySQLTest extends FunSpec with BaseFlinkTest {
   val calciteConfigBuilder = new CalciteConfigBuilder()
-  val ruleSets: RuleSet = RuleSets.ofList(JoinCommuteRule.INSTANCE, JoinAssociateRule.INSTANCE)
+  val ruleSets: RuleSet = RuleSets.ofList(JoinCommuteRule.INSTANCE, JoinAssociateRule.INSTANCE, LoptOptimizeJoinRule.INSTANCE)
   calciteConfigBuilder.addLogicalOptRuleSet(ruleSets)
   val tableConfig: TableConfig = new TableConfig()
   tableConfig.setCalciteConfig(calciteConfigBuilder.build())
-  private val tableEnv: BatchTableEnvironment = TableEnvironment.getTableEnvironment(env, tableConfig )
+  private val tableEnv: BatchTableEnvironment = TableEnvironment.getTableEnvironment(env, tableConfig)
+
 
   private val fileNumber = 1
   tableEnv.registerTableSource("R", getDataSourceR(fileNumber))
   tableEnv.registerTableSource("S", getDataSourceS(fileNumber))
   private lazy val r = tableEnv.scan("R")
   private lazy val s = tableEnv.scan("S")
-//  private val rTableSet = tableEnv.toDataSet[Row](r)
-//  private val sTableSet = tableEnv.toDataSet[Row](s)
+  //  private val rTableSet = tableEnv.toDataSet[Row](r)
+  //  private val sTableSet = tableEnv.toDataSet[Row](s)
 
 
   describe("Flink SQL  Empty test") {
