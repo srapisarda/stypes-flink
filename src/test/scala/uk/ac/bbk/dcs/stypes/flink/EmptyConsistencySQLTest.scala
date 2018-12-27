@@ -14,7 +14,8 @@ import org.scalatest.FunSpec
   */
 class EmptyConsistencySQLTest extends FunSpec with BaseFlinkTest {
   val calciteConfigBuilder = new CalciteConfigBuilder()
-  val ruleSets: RuleSet = RuleSets.ofList(JoinCommuteRule.INSTANCE, JoinAssociateRule.INSTANCE, LoptOptimizeJoinRule.INSTANCE)
+  val ruleSets: RuleSet = RuleSets.ofList(JoinCommuteRule.INSTANCE, JoinAssociateRule.INSTANCE,
+    LoptOptimizeJoinRule.INSTANCE)
   calciteConfigBuilder.addLogicalOptRuleSet(ruleSets)
   val tableConfig: TableConfig = new TableConfig()
   tableConfig.setCalciteConfig(calciteConfigBuilder.build())
@@ -65,20 +66,9 @@ class EmptyConsistencySQLTest extends FunSpec with BaseFlinkTest {
   }
 
   private def distinctTableSink(p1: Table, fileNumber: Int, serial: String, startTime: Long, qName: String): DataSet[Row] = {
-    val p1_distinct = p1.distinct()
-
-    val explanation: String = tableEnv.explain(p1_distinct)
-
-    println(explanation)
-
+    //println(explanation)
     p1.groupBy("x1").select("x1.count")
-
-    val count: Table =
-      p1_distinct
-        .groupBy("x1")
-        .select("x1 as cnt")
-
-
+    val count: Table = p1.groupBy("x1").select("x1 as cnt")
     val result: DataSet[Row] = tableEnv.toDataSet[Row](count)
 
     result
