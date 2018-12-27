@@ -66,7 +66,7 @@ class EmptyConsistencySQLTest extends FunSpec with BaseFlinkTest {
   }
 
   private def distinctTableSink(p1: Table, fileNumber: Int, serial: String, startTime: Long, qName: String): DataSet[Row] = {
-    //println(explanation)
+    println(tableEnv.explain(p1))
     p1.groupBy("x1").select("x1.count")
     val count: Table = p1.groupBy("x1").select("x1 as cnt")
     val result: DataSet[Row] = tableEnv.toDataSet[Row](count)
