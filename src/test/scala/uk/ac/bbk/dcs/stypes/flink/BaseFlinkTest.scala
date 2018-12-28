@@ -18,7 +18,7 @@ trait BaseFlinkTest {
   val pathToBenchmarkNDL_SQL = "src/test/resources/benchmark/Lines"
 
   val conf = new Configuration()
-  conf.setInteger("taskmanager.numberOfTaskSlots", 4)
+  conf.setInteger("taskmanager.numberOfTaskSlots", 1)
 
   val env: ExecutionEnvironment = ExecutionEnvironment.createLocalEnvironment(conf)
 
