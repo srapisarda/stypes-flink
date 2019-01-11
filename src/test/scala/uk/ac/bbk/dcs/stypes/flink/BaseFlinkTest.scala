@@ -1,5 +1,6 @@
 package uk.ac.bbk.dcs.stypes.flink
 
+import java.util
 import java.util.Date
 
 import org.apache.flink.api.common.typeinfo.TypeInformation
@@ -7,6 +8,7 @@ import org.apache.flink.api.scala._
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.table.api.scala.BatchTableEnvironment
 import org.apache.flink.table.api.{Table, TableEnvironment, Types}
+import org.apache.flink.table.catalog.{ExternalCatalog, ExternalCatalogTable, InMemoryExternalCatalog}
 import org.apache.flink.table.sources.CsvTableSource
 
 /**
@@ -85,6 +87,9 @@ trait BaseFlinkTest {
     env.readTextFile(getFilePath(fileNumber, "S")).map(stringMapper)
 
 
+  def getExternalCatalog(fileNumber: Int): ExternalCatalog =
+    new InMemoryExternalCatalog( s"externalCatalog$fileNumber")
+
   def getDataSourceR(fileNumber: Int): CsvTableSource = createDataSource(fileNumber, "R")
 
   def getDataSourceS(fileNumber: Int): CsvTableSource = createDataSource(fileNumber, "S")
@@ -96,6 +101,9 @@ trait BaseFlinkTest {
       .field("X", Types.STRING)
       .field("Y", Types.STRING)
       .build()
+
+
+
 
   private def getFilePath(fileNumber: Int, name: String): String =
     s"$pathToBenchmarkNDL_SQL/data/csv/$fileNumber.ttl-$name.csv"

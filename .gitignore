@@ -1,2 +1,5 @@
-.idea
-target
+src/test/resources/benchmark/
+.idea/
+log.*
+project/target/
+target/

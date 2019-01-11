@@ -32,6 +32,9 @@ class EmptyConsistencySQLTest extends FunSpec with BaseFlinkTest {
   private val fileNumber = 1
   tableEnv.registerTableSource("R", getDataSourceR(fileNumber))
   tableEnv.registerTableSource("S", getDataSourceS(fileNumber))
+
+  tableEnv.registerExternalCatalog( "rs", getExternalCatalog(fileNumber))
+
   private val r = tableEnv.scan("R")
   private val s = tableEnv.scan("S")
 
@@ -72,8 +75,9 @@ class EmptyConsistencySQLTest extends FunSpec with BaseFlinkTest {
     }
 
     it("should assert 0 as row count for relation S") {
+      val s1 = tableEnv.scan("S")
       val actual = 0
-      val rowCount = RelMetadataQuery.instance().getRowCount(s.getRelNode)
+      val rowCount = RelMetadataQuery.instance().getRowCount(s1.getRelNode)
       assert(rowCount == actual)
     }
 
