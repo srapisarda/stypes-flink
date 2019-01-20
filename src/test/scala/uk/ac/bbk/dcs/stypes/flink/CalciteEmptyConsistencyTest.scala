@@ -37,13 +37,9 @@ class CalciteEmptyConsistencyTest extends FunSpec with BaseFlinkTest {
 
     }
 
-//    it("should assert 0 as row count for relation S using calcite") {
-//      val csvTable =
-//    }
-
     it("should assert 0 as row count for relation S_EXT") {
       val catalogName = s"externalCatalog$fileNumber"
-      val ec = getExternalCatalog(catalogName, 1,tableEnv)
+      val ec = getExternalCatalog(catalogName, 1, tableEnv)
       tableEnv.registerExternalCatalog(catalogName, ec)
       val s1 = tableEnv.scan("S_EXT")
       val expected = 0
@@ -54,15 +50,15 @@ class CalciteEmptyConsistencyTest extends FunSpec with BaseFlinkTest {
 
   }
 
-  def getExternalCatalog(catalogName: String, fileNumber: Int, tableEnv:BatchTableEnvironment): ExternalCatalog = {
+  def getExternalCatalog(catalogName: String, fileNumber: Int, tableEnv: BatchTableEnvironment): ExternalCatalog = {
     val cat = new InMemoryExternalCatalog(catalogName)
     // externalCatalog
-    val externalCatalogTableS = getExternalCatalogTable() // new ExternalCatalogTable(true, false, true, false,)
+    val externalCatalogTableS = getExternalCatalogTable // new ExternalCatalogTable(true, false, true, false,)
     cat.createTable("S_EXT", externalCatalogTableS, ignoreIfExists = false)
     cat
   }
 
-  private def getExternalCatalogTable(): ExternalCatalogTable = {
+  private def getExternalCatalogTable: ExternalCatalogTable = {
     // connector descriptor
     val connectorDescriptor = new FileSystem()
     connectorDescriptor.path(getFilePath(fileNumber, "S"))
