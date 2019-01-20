@@ -1,15 +1,13 @@
 package uk.ac.bbk.dcs.stypes.flink
 
-import java.util
-import java.util.Date
-
 import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.scala._
 import org.apache.flink.configuration.Configuration
+import org.apache.flink.table.api.Types
 import org.apache.flink.table.api.scala.BatchTableEnvironment
-import org.apache.flink.table.api.{Table, TableEnvironment, Types}
 import org.apache.flink.table.catalog.{ExternalCatalog, ExternalCatalogTable, InMemoryExternalCatalog}
-import org.apache.flink.table.sources.CsvTableSource
+import org.apache.flink.table.descriptors._
+import org.apache.flink.table.sources.{CsvBatchTableSourceFactory, CsvTableSource}
 
 /**
   * Created by salvo on 16/07/2018.
@@ -32,44 +30,44 @@ trait BaseFlinkTest {
 
   case class Relation2(x: Long, y: Long)
 
-  def longMapper: (String) => (Long, Long) = (p: String) => {
+  def longMapper: String => (Long, Long) = (p: String) => {
     val line = p.split(',')
     (line.head.toLong, line.last.toLong)
   }
 
-  def stringMapper1: (String) => (String) = (p: String) => {
+  def stringMapper1: String => String = (p: String) => {
     val line = p.split(',')
     line.head
   }
 
-  def stringMapper: (String) => (String, String) = (p: String) => {
+  def stringMapper: String => (String, String) = (p: String) => {
     val line = p.split(',')
     (line.head, line.last)
   }
 
-  def stringMapper3: (String) => (String, String, String) = (p: String) => {
+  def stringMapper3: String => (String, String, String) = (p: String) => {
     val line = p.split(',')
     (line(0), line(1), line(2))
   }
 
-  def stringMapper4: (String) => (String, String, String, String) = (p: String) => {
+  def stringMapper4: String => (String, String, String, String) = (p: String) => {
     val line = p.split(',')
     (line(0), line(1), line(2), line(3))
   }
 
 
-  def rel2Mapper: (String) => Relation2 = (p: String) => {
+  def rel2Mapper: String => Relation2 = (p: String) => {
     val line = p.split(',')
     Relation2(line.head.toLong, line.last.toLong)
   }
 
-  def myJoin(firstRelation: DataSet[(String, String)], secondRelation: DataSet[(String, String)]) = {
+  def myJoin(firstRelation: DataSet[(String, String)], secondRelation: DataSet[(String, String)]): DataSet[(String, String)] = {
     firstRelation.join(secondRelation).where(1).equalTo(0).map(p => (p._1._1, p._2._2))
   }
 
-  def switchTerms(relation: DataSet[(String, String)]) = relation.map(p => (p._2, p._1))
+  def switchTerms(relation: DataSet[(String, String)]): DataSet[(String, String)] = relation.map(p => (p._2, p._1))
 
-  def emptyData2 = {
+  def emptyData2: DataSet[(String, String)] = {
     val ds: DataSet[(String, String)] = env.fromElements()
     ds
   }
@@ -87,9 +85,6 @@ trait BaseFlinkTest {
     env.readTextFile(getFilePath(fileNumber, "S")).map(stringMapper)
 
 
-  def getExternalCatalog(fileNumber: Int): ExternalCatalog =
-    new InMemoryExternalCatalog( s"externalCatalog$fileNumber")
-
   def getDataSourceR(fileNumber: Int): CsvTableSource = createDataSource(fileNumber, "R")
 
   def getDataSourceS(fileNumber: Int): CsvTableSource = createDataSource(fileNumber, "S")
@@ -105,7 +100,7 @@ trait BaseFlinkTest {
 
 
 
-  private def getFilePath(fileNumber: Int, name: String): String =
+   def getFilePath(fileNumber: Int, name: String): String =
     s"$pathToBenchmarkNDL_SQL/data/csv/$fileNumber.ttl-$name.csv"
 
 

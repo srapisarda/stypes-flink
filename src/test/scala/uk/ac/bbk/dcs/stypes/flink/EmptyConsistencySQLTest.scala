@@ -33,7 +33,6 @@ class EmptyConsistencySQLTest extends FunSpec with BaseFlinkTest {
   tableEnv.registerTableSource("R", getDataSourceR(fileNumber))
   tableEnv.registerTableSource("S", getDataSourceS(fileNumber))
 
-  tableEnv.registerExternalCatalog( "rs", getExternalCatalog(fileNumber))
 
   private val r = tableEnv.scan("R")
   private val s = tableEnv.scan("S")
