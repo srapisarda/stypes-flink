@@ -25,11 +25,10 @@ class CalciteEmptyConsistencyTest extends FunSpec with BaseFlinkTest {
 
   private val fileNumber = 1
 
-  tableEnv.registerTableSource("S", getDataSourceS(fileNumber))
-
   describe("Flink SQL  Empty test") {
 
     it("should assert 0 as row count for relation S") {
+      tableEnv.registerTableSource("S", getDataSourceS(fileNumber))
       val s1 = tableEnv.scan("S")
       val expected = 0
       val rowCount = RelMetadataQuery.instance().getRowCount(s1.getRelNode)
@@ -41,7 +40,7 @@ class CalciteEmptyConsistencyTest extends FunSpec with BaseFlinkTest {
       val catalogName = s"externalCatalog$fileNumber"
       val ec = getExternalCatalog(catalogName, 1, tableEnv)
       tableEnv.registerExternalCatalog(catalogName, ec)
-      val s1 = tableEnv.scan("S_EXT")
+      val s1 = tableEnv.scan( catalogName, "S_EXT")
       val expected = 0
       val rowCount = RelMetadataQuery.instance().getRowCount(s1.getRelNode)
       assert(rowCount == expected)
@@ -50,32 +49,44 @@ class CalciteEmptyConsistencyTest extends FunSpec with BaseFlinkTest {
 
   }
 
+//  val catalogName = s"externalCatalog$fileNumber"
+//  val ec: ExternalCatalog = getExternalCatalog(catalogName, 1, tableEnv)
+//  tableEnv.registerExternalCatalog(catalogName, ec)
+//  val s1: Table = tableEnv.scan( catalogName, "S_EXT")
+
   def getExternalCatalog(catalogName: String, fileNumber: Int, tableEnv: BatchTableEnvironment): ExternalCatalog = {
     val cat = new InMemoryExternalCatalog(catalogName)
-    // externalCatalog
-    val externalCatalogTableS = getExternalCatalogTable // new ExternalCatalogTable(true, false, true, false,)
+    // external Catalog table
+    val externalCatalogTableS = getExternalCatalogTable("S")
+    // add external Catalog table
     cat.createTable("S_EXT", externalCatalogTableS, ignoreIfExists = false)
     cat
   }
 
-  private def getExternalCatalogTable: ExternalCatalogTable = {
+  private def getExternalCatalogTable(fileName: String): ExternalCatalogTable = {
     // connector descriptor
     val connectorDescriptor = new FileSystem()
-    connectorDescriptor.path(getFilePath(fileNumber, "S"))
-    // Format
+    connectorDescriptor.path(getFilePath(fileNumber, fileName))
+    // format
     val fd = new Csv()
     fd.field("X", Types.STRING)
     fd.field("Y", Types.STRING)
     fd.fieldDelimiter(",")
-    // Statistic
+    //schema
+    val schema = new Schema()
+    schema.field("X", Types.STRING)
+    schema.field("Y", Types.STRING)
+    // statistic
     val statistics = new Statistics()
     statistics.rowCount(0)
-    //Metadata
+    // metadata
     val md = new Metadata()
+
     ExternalCatalogTable.builder(connectorDescriptor)
       .withFormat(fd)
-      .withStatistics(statistics)
+//      .withStatistics(statistics)
       .withMetadata(md)
+      .withSchema(schema) // for some reason does not like statistic
       .asTableSource()
   }
 
