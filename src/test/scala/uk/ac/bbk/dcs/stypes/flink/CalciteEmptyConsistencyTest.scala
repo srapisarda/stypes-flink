@@ -14,15 +14,16 @@ import org.apache.flink.table.calcite.CalciteConfigBuilder
 import org.apache.flink.table.catalog.{ExternalCatalog, ExternalCatalogTable, InMemoryExternalCatalog}
 import org.apache.flink.table.descriptors._
 import org.junit.Assert
-import org.scalatest.FunSpec
+import org.scalatest.{FunSpec, Matchers}
 
+import scala.collection.immutable
 import scala.util.Try
 
 
 /**
   * Created by salvo on 19/11/2018.
   */
-class CalciteEmptyConsistencyTest extends FunSpec with BaseFlinkTest {
+class CalciteEmptyConsistencyTest extends FunSpec with BaseFlinkTest with Matchers {
   val calciteConfigBuilder = new CalciteConfigBuilder()
   val ruleSets: RuleSet = RuleSets.ofList(
     LoptOptimizeJoinRule.INSTANCE)
@@ -143,18 +144,25 @@ class CalciteEmptyConsistencyTest extends FunSpec with BaseFlinkTest {
         .ok()
     }
 
-    it("should parse and execute an SQL` plan for count of join query using calcite ") {
+    it("should parse and execute an SQL plan for count of join query using calcite ") {
       sql(model, "EXPLAIN PLAN FOR SELECT COUNT(*) as C " +
         "FROM TTLA_ONE A  " +
         "INNER JOIN TTLR_ONE B ON A.X = B.X " +
         "INNER JOIN EMPTY_T C ON C.X = B.Y "
-//        + "INNER JOIN EMPTY_T D ON C.X = D.X"
-          )
-//        .returns(List("C=0"))
+      )
+      .returns(List("PLAN=EnumerableAggregate(group=[{}], C=[COUNT()])\n" +
+          "  EnumerableJoin(condition=[=($0, $2)], joinType=[inner])\n" +
+          "    EnumerableInterpreter\n" +
+          "      BindableTableScan(table=[[STYPES, TTLA_ONE]])\n" +
+          "    EnumerableJoin(condition=[=($0, $2)], joinType=[inner])\n" +
+          "      EnumerableInterpreter\n" +
+          "        BindableTableScan(table=[[STYPES, EMPTY_T]])\n" +
+          "      EnumerableInterpreter\n" +
+          "        BindableTableScan(table=[[STYPES, TTLR_ONE]])\n"
+      ))
         .ok()
-    }
-//  }
 
+    }
 
   private def output(resultSet: ResultSet): Unit = {
     try
@@ -229,8 +237,8 @@ class CalciteEmptyConsistencyTest extends FunSpec with BaseFlinkTest {
   private def checkExpected(expected: List[String]): ResultSet => Unit =
     (resultSet: ResultSet) => {
      try {
-        val lines = collect(resultSet)
-        Assert assertEquals(expected, lines)
+        val lines: List[String] = collect(resultSet)
+        expected should equal (lines)
       } catch {
         case e: SQLException =>
           throw new RuntimeException(e)
