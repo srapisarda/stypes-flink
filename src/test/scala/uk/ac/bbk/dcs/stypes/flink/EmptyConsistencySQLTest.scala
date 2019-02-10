@@ -37,12 +37,12 @@ class EmptyConsistencySQLTest extends FunSpec with BaseFlinkTest {
   private val r = tableEnv.scan("R")
   private val s = tableEnv.scan("S")
 
-
   var relMetadataQuery = RelMetadataQuery.instance()
 
   val rowCount = RelMetadataQuery.instance().getRowCount(s.getRelNode)
   val sRowCount = s.getRelNode.estimateRowCount(RelMetadataQuery.instance())
   //  (new JaninoRelMetadataProvider(DefaultRelMetadataProvider.INSTANCE), false))
+
 
   private val rTableSet = tableEnv.toDataSet[Row](r)
   private val sTableSet = tableEnv.toDataSet[Row](s)
