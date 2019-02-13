@@ -129,6 +129,12 @@ class CalciteEmptyConsistencyTest extends FunSpec with BaseFlinkTest with Matche
         .ok()
     }
 
+  it("should parse and execute an SQL count query on TTLR_ONE using calcite ") {
+    sql(model, "SELECT COUNT(*) AS C FROM TTLR_ONE a")
+      .returns(List("C=61390"))
+      .ok()
+  }
+
     it("should parse and execute an SQL count query in empty table using calcite ") {
       sql(model, "SELECT COUNT(*) as C FROM EMPTY_T a")
         .returns(List("C=0"))
@@ -150,7 +156,7 @@ class CalciteEmptyConsistencyTest extends FunSpec with BaseFlinkTest with Matche
         "INNER JOIN TTLR_ONE B ON A.X = B.X " +
         "INNER JOIN EMPTY_T C ON C.X = B.Y "
       )
-      .returns(List("PLAN=EnumerableAggregate(group=[{}], C=[COUNT()])\n" +
+        .returns(List("PLAN=EnumerableAggregate(group=[{}], C=[COUNT()])\n" +
           "  EnumerableJoin(condition=[=($0, $2)], joinType=[inner])\n" +
           "    EnumerableInterpreter\n" +
           "      BindableTableScan(table=[[STYPES, TTLA_ONE]])\n" +
@@ -159,10 +165,21 @@ class CalciteEmptyConsistencyTest extends FunSpec with BaseFlinkTest with Matche
           "        BindableTableScan(table=[[STYPES, EMPTY_T]])\n" +
           "      EnumerableInterpreter\n" +
           "        BindableTableScan(table=[[STYPES, TTLR_ONE]])\n"
-      ))
+        ))
         .ok()
-
     }
+
+      it("should parse and execute an SQL plan for count of join query using calcite 2") {
+        sql(model, "SELECT COUNT(*) as NUM " +
+          "FROM TTLA_ONE A  " +
+          "INNER JOIN TTLR_ONE B1 ON A.X = B1.X " +
+          "INNER JOIN TTLR_ONE B2 ON B2.X = B1.X " +
+          "INNER JOIN EMPTY_T C1 ON C1.X = B2.Y " +
+          "INNER JOIN EMPTY_T C2 ON C2.X = C2.X "
+        )
+          .ok()
+      }
+
 
   private def output(resultSet: ResultSet): Unit = {
     try
