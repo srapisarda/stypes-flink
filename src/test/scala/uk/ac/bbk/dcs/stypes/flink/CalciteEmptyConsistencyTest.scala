@@ -170,7 +170,7 @@ class CalciteEmptyConsistencyTest extends FunSpec with BaseFlinkTest with Matche
     }
 
       it("should parse and execute an SQL plan for count of join query using calcite 2") {
-        sql(model, "SELECT COUNT(*) as NUM " +
+        sql(model, "EXPLAIN PLAN FOR SELECT COUNT(*) as NUM " +
           "FROM TTLA_ONE A  " +
           "INNER JOIN TTLR_ONE B1 ON A.X = B1.X " +
           "INNER JOIN TTLR_ONE B2 ON B2.X = B1.X " +
