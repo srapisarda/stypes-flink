@@ -9,7 +9,6 @@ import org.apache.calcite.config.CalciteConnectionConfigImpl
 import org.apache.calcite.jdbc.{CalciteConnection, CalciteSchema}
 import org.apache.calcite.plan._
 import org.apache.calcite.plan.hep.{HepPlanner, HepProgram}
-import org.apache.calcite.plan.volcano.VolcanoPlanner
 import org.apache.calcite.prepare.CalciteCatalogReader
 import org.apache.calcite.rel.rules.{FilterMergeRule, FilterProjectTransposeRule, LoptOptimizeJoinRule, ProjectMergeRule}
 import org.apache.calcite.rex.RexBuilder
@@ -69,7 +68,7 @@ class CalciteSlideTest extends FunSpec {
     builder.build()
   }
 
-  it("shoild") {
+  it("should execute the query validation and planning") {
     val sql = " SELECT COUNT(*) as NUM " +
       "FROM TTLA_ONE A  " +
       "INNER JOIN TTLR_ONE B1 ON A.X = B1.X " +
