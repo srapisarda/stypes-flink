@@ -9,6 +9,7 @@ import org.apache.calcite.config.CalciteConnectionConfigImpl
 import org.apache.calcite.jdbc.{CalciteConnection, CalciteSchema}
 import org.apache.calcite.plan._
 import org.apache.calcite.plan.hep.{HepPlanner, HepProgram}
+import org.apache.calcite.plan.volcano.VolcanoPlanner
 import org.apache.calcite.prepare.CalciteCatalogReader
 import org.apache.calcite.rel.rules.{FilterMergeRule, FilterProjectTransposeRule, LoptOptimizeJoinRule, ProjectMergeRule}
 import org.apache.calcite.rex.RexBuilder
@@ -90,12 +91,21 @@ class CalciteSlideTest extends FunSpec {
     // convert SqlNode to RelNode
     val rexBuilder = createRexBuilder()
 
-    val planner = new HepPlanner(HepProgram.builder()
-      .addRuleInstance(FilterProjectTransposeRule.INSTANCE)
-      .addRuleInstance(ProjectMergeRule.INSTANCE)
-      .addRuleInstance(FilterMergeRule.INSTANCE)
-      .addRuleInstance(LoptOptimizeJoinRule.INSTANCE)
-      build())
+    val rules = Seq(
+      FilterProjectTransposeRule.INSTANCE,
+      ProjectMergeRule.INSTANCE,
+      FilterMergeRule.INSTANCE,
+      LoptOptimizeJoinRule.INSTANCE)
+    val program = Programs.ofRules(rules.asJava)
+
+    val hepPlanner =  new HepPlanner(
+        HepProgram.builder().addRuleCollection(rules.asJava).build())
+
+    val volcanoPlanner = new VolcanoPlanner()
+    rules.foreach( role => volcanoPlanner.addRule(role) )
+
+    val planner = hepPlanner
+
     val cluster = RelOptCluster.create(planner, rexBuilder)
     val convertletTable = StandardConvertletTable.INSTANCE
 
@@ -108,15 +118,6 @@ class CalciteSlideTest extends FunSpec {
     val sqlToRelConverter =
       new SqlToRelConverter(null, validator, catalogReader, cluster, convertletTable)
     val root = sqlToRelConverter.convertQuery(validateSqlNode, false, true)
-
-
-    val program = Programs.ofRules(
-      FilterProjectTransposeRule.INSTANCE,
-      ProjectMergeRule.INSTANCE,
-      FilterMergeRule.INSTANCE,
-      LoptOptimizeJoinRule.INSTANCE
-    )
-
 
 
     val expressionName = "mysql"
