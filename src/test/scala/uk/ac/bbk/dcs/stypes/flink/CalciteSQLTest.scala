@@ -88,8 +88,20 @@ class CalciteSQLTest  extends FunSpec  with Matchers {
       "INNER JOIN TTLR_ONE B1 ON A.X = B1.X " +
       "INNER JOIN TTLR_ONE B2 ON B2.X = B1.X " +
       "INNER JOIN EMPTY_T C1 ON C1.X = B2.Y " +
-      "INNER JOIN EMPTY_T C2 ON C2.X = C2.X "
+      "INNER JOIN EMPTY_T C2 ON C1.X = C2.X " +
+      "INNER JOIN TTLR_ONE D2 ON C2.X = D2.X "
     )
+      .ok()
+  }
+
+  it("should parse and execute an SQL plan for count of join query using calcite 2.2") {
+    sql(model, "SELECT COUNT(*) as NUM " +
+      "FROM TTLA_ONE A  " +
+      "INNER JOIN TTLR_ONE B1 ON A.X = B1.X " +
+      "INNER JOIN TTLR_ONE B2 ON B2.X = B1.X " +
+      "INNER JOIN EMPTY_T C1 ON C1.X = B2.Y " +
+      "INNER JOIN EMPTY_T C2 ON C1.X = C2.X "
+    ).returns(List("NUM=0"))
       .ok()
   }
 
