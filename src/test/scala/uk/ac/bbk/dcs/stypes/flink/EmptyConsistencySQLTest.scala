@@ -8,8 +8,8 @@ import org.apache.flink.api.scala.{DataSet, _}
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.optimizer.{DataStatistics, Optimizer}
 import org.apache.flink.table.api.scala.BatchTableEnvironment
-import org.apache.flink.table.api.{Table, TableConfig, TableEnvironment}
-import org.apache.flink.table.calcite.CalciteConfigBuilder
+import org.apache.flink.table.api.{Table, TableConfig, TableEnvironment, java}
+import org.apache.flink.table.planner.calcite.CalciteConfigBuilder
 import org.apache.flink.types.Row
 import org.scalatest.FunSpec
 
@@ -23,10 +23,10 @@ class EmptyConsistencySQLTest extends FunSpec with BaseFlinkTest {
   val calciteConfigBuilder = new CalciteConfigBuilder()
   val ruleSets: RuleSet = RuleSets.ofList(
     LoptOptimizeJoinRule.INSTANCE)
-  calciteConfigBuilder.addLogicalOptRuleSet(ruleSets)
+//  calciteConfigBuilder.addLogicalOptRuleSet(ruleSets)
   val tableConfig: TableConfig = new TableConfig()
-  tableConfig.setCalciteConfig(calciteConfigBuilder.build())
-  private val tableEnv: BatchTableEnvironment = TableEnvironment.getTableEnvironment(env, tableConfig)
+//  tableConfig.setCalciteConfig(calciteConfigBuilder.build())
+  private val tableEnv: BatchTableEnvironment = BatchTableEnvironment.create(env,tableConfig)
 
 
   private val fileNumber = 1
@@ -39,15 +39,15 @@ class EmptyConsistencySQLTest extends FunSpec with BaseFlinkTest {
 
   var relMetadataQuery = RelMetadataQuery.instance()
 
-  val rowCount = RelMetadataQuery.instance().getRowCount(s.getRelNode)
-  val sRowCount = s.getRelNode.estimateRowCount(RelMetadataQuery.instance())
+//  val rowCount = RelMetadataQuery.instance().getRowCount(s.getRelNode)
+//  val sRowCount = s.getRelNode.estimateRowCount(RelMetadataQuery.instance())
   //  (new JaninoRelMetadataProvider(DefaultRelMetadataProvider.INSTANCE), false))
 
 
   private val rTableSet = tableEnv.toDataSet[Row](r)
   private val sTableSet = tableEnv.toDataSet[Row](s)
 
-  private val qc = tableEnv.queryConfig
+//  private val qc = tableEnv.queryConfig
 
 
   describe("Flink SQL  Empty test") {
@@ -74,9 +74,9 @@ class EmptyConsistencySQLTest extends FunSpec with BaseFlinkTest {
     }
 
     it("should assert 0 as row count for relation S") {
-      val s1 = tableEnv.scan("S")
+      val s1 = tableEnv.from("S")
       val actual = 0
-      val rowCount = RelMetadataQuery.instance().getRowCount(s1.getRelNode)
+      val rowCount = 1 // RelMetadataQuery.instance().getRowCount(s1.getRelNode)
       assert(rowCount == actual)
     }
 

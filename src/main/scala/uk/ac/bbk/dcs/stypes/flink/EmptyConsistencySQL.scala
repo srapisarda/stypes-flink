@@ -2,16 +2,15 @@ package uk.ac.bbk.dcs.stypes.flink
 
 import java.util.UUID
 
-import org.apache.flink.table.api.{Table, TableEnvironment}
+import org.apache.flink.table.api.Table
+import org.apache.flink.table.api.scala.BatchTableEnvironment
 import org.apache.flink.table.sources.CsvTableSource
-import org.apache.flink.types.Row
-import org.apache.flink.api.scala._
 
 /**
   * Created by salvo on 19/11/2018.
   */
 object EmptyConsistencySQL extends BaseFlinkRewriting {
-  private val tableEnv = TableEnvironment.getTableEnvironment(env)
+  private val tableEnv = BatchTableEnvironment.create(env)
 
   def main(args: Array[String]): Unit = {
     if (args.length > 1)
@@ -27,8 +26,8 @@ object EmptyConsistencySQL extends BaseFlinkRewriting {
 
 
     executeAsTable(fileNumber, serial, "empty-consistency", _ => {
-      val r: Table = tableEnv.scan("R")
-      val s = tableEnv.scan("S")
+      val r: Table = tableEnv.from("R")
+      val s = tableEnv.from("S")
       r.join(r, ""  ). join(r)
     } )
 

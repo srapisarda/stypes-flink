@@ -4,10 +4,7 @@ import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.api.scala._
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.table.api.Types
-import org.apache.flink.table.api.scala.BatchTableEnvironment
-import org.apache.flink.table.catalog.{ExternalCatalog, ExternalCatalogTable, InMemoryExternalCatalog}
-import org.apache.flink.table.descriptors._
-import org.apache.flink.table.sources.{CsvBatchTableSourceFactory, CsvTableSource}
+import org.apache.flink.table.sources.CsvTableSource
 
 /**
   * Created by salvo on 16/07/2018.
@@ -20,7 +17,7 @@ trait BaseFlinkTest {
   val conf = new Configuration()
   conf.setInteger("taskmanager.numberOfTaskSlots", 1)
 
-  val env: ExecutionEnvironment = ExecutionEnvironment.createLocalEnvironment(conf)
+  val env: ExecutionEnvironment =  ExecutionEnvironment.getExecutionEnvironment // createLocalEnvironment(conf)
 
   env.setParallelism(1)
 
@@ -103,5 +100,6 @@ trait BaseFlinkTest {
    def getFilePath(fileNumber: Int, name: String): String =
     s"$pathToBenchmarkNDL_SQL/data/csv/$fileNumber.ttl-$name.csv"
 
-
+    def getFilePathAsResource(fileNumber: Int, name: String): String =
+      s"/benchmark/Lines/data/csv/$fileNumber.ttl-$name.csv"
 }
