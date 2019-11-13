@@ -17,7 +17,7 @@ trait BaseFlinkTest {
   val conf = new Configuration()
   conf.setInteger("taskmanager.numberOfTaskSlots", 1)
 
-  val env: ExecutionEnvironment =  ExecutionEnvironment.getExecutionEnvironment // createLocalEnvironment(conf)
+  val env: ExecutionEnvironment = ExecutionEnvironment.getExecutionEnvironment // createLocalEnvironment(conf)
 
   env.setParallelism(1)
 
@@ -95,11 +95,12 @@ trait BaseFlinkTest {
       .build()
 
 
-
-
-   def getFilePath(fileNumber: Int, name: String): String =
+  def getFilePath(fileNumber: Int, name: String): String =
     s"$pathToBenchmarkNDL_SQL/data/csv/$fileNumber.ttl-$name.csv"
 
-    def getFilePathAsResource(fileNumber: Int, name: String): String =
-      s"/benchmark/Lines/data/csv/$fileNumber.ttl-$name.csv"
+  def getFilePathAsResource(fileNumber: Int, name: String): String =
+    s"/benchmark/Lines/data/csv/$fileNumber.ttl-$name.csv"
+
+  def getFilePathFolderAsResource: String =
+    s"/benchmark/Lines/data/csv/"
 }

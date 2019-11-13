@@ -1,11 +1,14 @@
 package uk.ac.bbk.dcs.stypes.flink
 
+import org.apache.calcite.tools.RuleSets
 import org.apache.flink.api.scala._
 import org.apache.flink.table.api._
 import org.apache.flink.table.api.scala.BatchTableEnvironment
+import org.apache.flink.table.calcite.{CalciteConfig, CalciteConfigBuilder}
 import org.apache.flink.table.catalog._
 import org.apache.flink.table.catalog.stats.CatalogTableStatistics
 import org.apache.flink.table.descriptors._
+import org.apache.flink.table.plan.rules.datastream.DataStreamRetractionRules
 import org.apache.flink.types.Row
 import org.scalatest.{BeforeAndAfterAll, FunSpec, Matchers}
 
@@ -44,6 +47,14 @@ class CalciteEmptyConsistencyTest extends FunSpec with BaseFlinkTest with Matche
     bbTableEnv.useCatalog(catalogName)
     bbTableEnv.useDatabase(databaseName)
 
+    val calciteConfig: CalciteConfig = new CalciteConfigBuilder()
+      .addDecoRuleSet(RuleSets.ofList(DataStreamRetractionRules.DEFAULT_RETRACTION_INSTANCE))
+      .addDecoRuleSet(RuleSets.ofList(DataStreamRetractionRules.UPDATES_AS_RETRACTION_INSTANCE,
+        DataStreamRetractionRules.ACCMODE_INSTANCE)
+      )
+      .build()
+
+    tableEnv.getConfig.setPlannerConfig(calciteConfig)
   }
 
   override def afterAll(): Unit = {
@@ -100,8 +111,10 @@ class CalciteEmptyConsistencyTest extends FunSpec with BaseFlinkTest with Matche
         "inner join R as r2 on r1.Y=r2.X inner join A on r2.Y=A.X " +
         "inner join S on S.X=A.X")
 
-      val explanation = tableEnv.explain(false)
-      println(explanation)
+      //val explanation = tableEnv.explain(false)
+      //println(explanation)
+
+      val actual = tableEnv.toDataSet[Row](t).count()
       val expected = 0
       assert(0 == expected)
     }
