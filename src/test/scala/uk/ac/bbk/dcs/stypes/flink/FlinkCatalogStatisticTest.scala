@@ -1,10 +1,14 @@
 package uk.ac.bbk.dcs.stypes.flink
 
+import org.apache.calcite.tools.RuleSets
 import org.apache.commons.io.FileUtils
 import org.apache.flink.api.common.typeinfo.{TypeInformation, Types}
 import org.apache.flink.table.api._
+import org.apache.flink.table.calcite.{CalciteConfig, CalciteConfigBuilder}
 import org.apache.flink.table.catalog.stats.CatalogTableStatistics
 import org.apache.flink.table.catalog.{ConnectorCatalogTable, ObjectPath}
+import org.apache.flink.table.plan.rules.dataSet.{DataSetJoinRule, DataSetUnionRule}
+import org.apache.flink.table.plan.rules.datastream.DataStreamRetractionRules
 import org.apache.flink.table.sinks.{CsvTableSink, TableSink}
 import org.apache.flink.table.sources.CsvTableSource
 import org.apache.flink.types.Row
@@ -62,6 +66,16 @@ class FlinkCatalogStatisticTest extends FunSpec with BaseFlinkTest with Matchers
       new CatalogTableStatistics(492, 1, 2807L, 2807 * 2L),
       true)
 
+
+    val calciteConfig: CalciteConfig = new CalciteConfigBuilder()
+      .addDecoRuleSet(RuleSets.ofList(DataSetJoinRule.INSTANCE))
+      .addDecoRuleSet(RuleSets.ofList(DataSetUnionRule.INSTANCE,
+        DataStreamRetractionRules.ACCMODE_INSTANCE)
+      )
+      .build()
+
+    tableEnv.getConfig.setPlannerConfig(calciteConfig)
+
   }
 
   override def before(fun: => Any)(implicit pos: Position): Unit = {
@@ -81,9 +95,9 @@ class FlinkCatalogStatisticTest extends FunSpec with BaseFlinkTest with Matchers
 
     it("should create statistics and apply them in order to create a plan") {
       val table = tableEnv.sqlQuery("select r1.X, A.X from R as r1 " +
-        "inner join R as r2 on r1.Y=r2.X " +
-        "inner join S on r2.Y = S.Y " +
-        "inner join A on S.X=A.X")
+        "inner join S on r1.Y=S.X " +
+        "inner join R as r2 on r2.Y = S.Y " +
+        "inner join A on r2.X=A.X")
 
       val plan = tableEnv.explain(table)
 

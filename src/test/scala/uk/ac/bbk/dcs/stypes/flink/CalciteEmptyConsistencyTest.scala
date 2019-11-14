@@ -8,6 +8,7 @@ import org.apache.flink.table.calcite.{CalciteConfig, CalciteConfigBuilder}
 import org.apache.flink.table.catalog._
 import org.apache.flink.table.catalog.stats.CatalogTableStatistics
 import org.apache.flink.table.descriptors._
+import org.apache.flink.table.plan.rules.dataSet.{DataSetJoinRule, DataSetUnionRule}
 import org.apache.flink.table.plan.rules.datastream.DataStreamRetractionRules
 import org.apache.flink.types.Row
 import org.scalatest.{BeforeAndAfterAll, FunSpec, Matchers}
@@ -48,8 +49,8 @@ class CalciteEmptyConsistencyTest extends FunSpec with BaseFlinkTest with Matche
     bbTableEnv.useDatabase(databaseName)
 
     val calciteConfig: CalciteConfig = new CalciteConfigBuilder()
-      .addDecoRuleSet(RuleSets.ofList(DataStreamRetractionRules.DEFAULT_RETRACTION_INSTANCE))
-      .addDecoRuleSet(RuleSets.ofList(DataStreamRetractionRules.UPDATES_AS_RETRACTION_INSTANCE,
+      .addDecoRuleSet(RuleSets.ofList(DataSetJoinRule.INSTANCE))
+      .addDecoRuleSet(RuleSets.ofList(DataSetUnionRule.INSTANCE,
         DataStreamRetractionRules.ACCMODE_INSTANCE)
       )
       .build()
