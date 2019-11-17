@@ -32,6 +32,10 @@ class FlinkCatalogStatisticTest extends FunSpec with BaseFlinkTest with Matchers
 
   private val settings = EnvironmentSettings.newInstance().useBlinkPlanner().inBatchMode().build()
   private val tableEnv: TableEnvironment = TableEnvironment.create(settings)
+  tableEnv.getConfig        // access high-level configuration
+    .getConfiguration   // set low-level key-value options
+    .setString("table.optimizer.join-reorder-enabled", "true")
+
   private val catalog = tableEnv.getCatalog(tableEnv.getCurrentCatalog).orElse(null)
 
   override def beforeAll(): Unit = {
@@ -66,7 +70,7 @@ class FlinkCatalogStatisticTest extends FunSpec with BaseFlinkTest with Matchers
       new CatalogTableStatistics(492, 1, 2807L, 2807 * 2L),
       true)
 
-
+    // change calcite configuration
     val calciteConfig: CalciteConfig = new CalciteConfigBuilder()
       .addDecoRuleSet(RuleSets.ofList(DataSetJoinRule.INSTANCE))
       .addDecoRuleSet(RuleSets.ofList(DataSetUnionRule.INSTANCE,
@@ -95,8 +99,8 @@ class FlinkCatalogStatisticTest extends FunSpec with BaseFlinkTest with Matchers
 
     it("should create statistics and apply them in order to create a plan") {
       val table = tableEnv.sqlQuery("select r1.X, A.X from R as r1 " +
-        "inner join S on r1.Y=S.X " +
-        "inner join R as r2 on r2.Y = S.Y " +
+        "inner join R as r2  on r1.Y=r2.X " +
+        "inner join S on r2.Y = S.X " +
         "inner join A on r2.X=A.X")
 
       val plan = tableEnv.explain(table)

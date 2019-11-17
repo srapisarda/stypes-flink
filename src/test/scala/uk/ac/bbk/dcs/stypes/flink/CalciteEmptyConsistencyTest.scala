@@ -23,8 +23,11 @@ class CalciteEmptyConsistencyTest extends FunSpec with BaseFlinkTest with Matche
 
   private val bbSettings = EnvironmentSettings.newInstance().useBlinkPlanner().inBatchMode().build()
   private val bbTableEnv = TableEnvironment.create(bbSettings)
-  private val tableEnv: BatchTableEnvironment = BatchTableEnvironment.create(env, bbTableEnv.getConfig)
 
+  private val tableEnv: BatchTableEnvironment = BatchTableEnvironment.create(env, bbTableEnv.getConfig)
+  tableEnv.getConfig        // access high-level configuration
+    .getConfiguration   // set low-level key-value options
+    .setString("table.optimizer.join-reorder-enabled", "true")
 
   private val catalogName = "S_CAT"
   private val databaseName = "S_EXT"
