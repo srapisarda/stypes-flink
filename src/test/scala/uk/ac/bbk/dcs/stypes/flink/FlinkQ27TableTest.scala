@@ -49,7 +49,7 @@ class FlinkQ27TableTest extends FunSpec with BaseFlinkTableTest {
 
       // p12(x7,x4) :- r(x4,x7), b(x7).
       val p12_2 =
-        "select b1.X as X, r1.X as Y " +
+        "select r1.Y as X, r1.X as Y " +
         "from R as r1 " +
           "inner join B as b1 on r1.Y=b1.X"
 
@@ -94,12 +94,13 @@ class FlinkQ27TableTest extends FunSpec with BaseFlinkTableTest {
       println( tableEnv.explain(p1) )
 
       p1.insertInto(tableNameSink1)
+
+
+      //val count = tableEnv sqlQuery( s"select count(X) as X from $tableNameSink1" )
+
+      //count.insertInto(tableNameSinkCount)
+
       tableEnv.execute("Q27 sql")
-
-      val count = tableEnv sqlQuery( s"select count(*) from $tableNameSink1" )
-
-      println ( count.toString )
-
     }
   }
 

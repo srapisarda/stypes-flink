@@ -24,22 +24,24 @@ trait BaseFlinkTableTest extends BaseFlinkTest {
   private val tableNameR = "R"
   private val tableNameB = "B"
   val tableNameSink1 = s"sink_1"
-  private val tableNameSink2 = s"sink_2"
+  val tableNameSink2 = s"sink_2"
+  val tableNameSinkCount = s"sink_count"
   private val pathS = new ObjectPath(databaseName, tableNameS)
   private val pathA = new ObjectPath(databaseName, tableNameA)
   private val pathR = new ObjectPath(databaseName, tableNameR)
   private val pathB = new ObjectPath(databaseName, tableNameB)
   private val pathSink1 = new ObjectPath(databaseName, tableNameSink1)
   private val pathSink2 = new ObjectPath(databaseName, tableNameSink2)
+  private val pathSinkCount = new ObjectPath(databaseName, tableNameSinkCount)
 
-  private val fileNumber = 4
+  private val fileNumber = 3
 
   private val settings = EnvironmentSettings.newInstance().useBlinkPlanner().inBatchMode().build()
 
   val tableEnv: TableEnvironment = TableEnvironment.create(settings)
-  tableEnv.getConfig // access high-level configuration
-    .getConfiguration // set low-level key-value options
-    .setString("table.optimizer.join-reorder-enabled", "true")
+//  tableEnv.getConfig // access high-level configuration
+//    .getConfiguration // set low-level key-value options
+//    .setString("table.optimizer.join-reorder-enabled", "true")
 
   val catalog = tableEnv.getCatalog(tableEnv.getCurrentCatalog).orElse(null)
 
@@ -70,6 +72,11 @@ trait BaseFlinkTableTest extends BaseFlinkTest {
     false
   )
 
+  catalog.createTable(pathSinkCount,
+    ConnectorCatalogTable.sink(getExternalCatalogSinkTable(tableNameSinkCount, fileNumber), true),
+    false
+  )
+
   catalog.alterTableStatistics(pathS,
     new CatalogTableStatistics(0, 1, 0L, 0L),
     true)
@@ -81,14 +88,14 @@ trait BaseFlinkTableTest extends BaseFlinkTest {
     true)
 
   // change calcite configuration
-  val calciteConfig: CalciteConfig = new CalciteConfigBuilder()
-    .addDecoRuleSet(RuleSets.ofList(DataSetJoinRule.INSTANCE))
-    .addDecoRuleSet(RuleSets.ofList(DataSetUnionRule.INSTANCE,
-      DataStreamRetractionRules.ACCMODE_INSTANCE)
-    )
-    .build()
-
-  tableEnv.getConfig.setPlannerConfig(calciteConfig)
+//  val calciteConfig: CalciteConfig = new CalciteConfigBuilder()
+//    .addDecoRuleSet(RuleSets.ofList(DataSetJoinRule.INSTANCE))
+//    .addDecoRuleSet(RuleSets.ofList(DataSetUnionRule.INSTANCE,
+//      DataStreamRetractionRules.ACCMODE_INSTANCE)
+//    )
+//    .build()
+//
+//  tableEnv.getConfig.setPlannerConfig(calciteConfig)
 
 
   private def newUUID = UUID.randomUUID().toString.replaceAll("-", "_")
@@ -124,8 +131,8 @@ trait BaseFlinkTableTest extends BaseFlinkTest {
 
   private def getExternalCatalogSinkTable(fileName: String, fileNumber: Int): TableSink[Row] = {
     val csvTableSink = new CsvTableSink(getResultSinkPath(fileName, fileNumber))
-    val fieldNames: Array[String] = Array("X", "Y")
-    val fieldTypes: Array[TypeInformation[_]] = Array(Types.STRING, Types.STRING)
+    val fieldNames: Array[String] = if(fileName == tableNameSinkCount) Array("X") else Array("X", "Y")
+    val fieldTypes: Array[TypeInformation[_]] = if(fileName == tableNameSinkCount) Array(Types.LONG) else Array(Types.STRING, Types.STRING)
     csvTableSink.configure(fieldNames, fieldTypes)
   }
 
