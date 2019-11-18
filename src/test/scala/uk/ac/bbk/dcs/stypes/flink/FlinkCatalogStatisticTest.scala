@@ -16,7 +16,7 @@ import org.junit.Assert.assertNotNull
 import org.scalactic.source.Position
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FunSpec, Matchers}
 
-class FlinkCatalogStatisticTest extends FunSpec with BaseFlinkTest with Matchers with BeforeAndAfterAll with BeforeAndAfter {
+class FlinkCatalogStatisticTest extends FunSpec with BaseFlinkTest with Matchers with BeforeAndAfterAll with BeforeAndAfter  {
 
   private val catalogName = "S_CAT"
   private val databaseName = "default_database"
@@ -82,7 +82,7 @@ class FlinkCatalogStatisticTest extends FunSpec with BaseFlinkTest with Matchers
 
   }
 
-  override def before(fun: => Any)(implicit pos: Position): Unit = {
+  before {
     val file = FileUtils.getFile(getResultSinkPath(tableNameSink, fileNumber))
     if (file.exists() && file.isDirectory)
       FileUtils.deleteDirectory(file)
@@ -98,30 +98,30 @@ class FlinkCatalogStatisticTest extends FunSpec with BaseFlinkTest with Matchers
 
 
     it("should create statistics and apply them in order to create a plan") {
-      val table = tableEnv.sqlQuery("select r1.X, A.X from R as r1 " +
-        "inner join R as r2  on r1.Y=r2.X " +
-        "inner join S on r2.Y = S.X " +
-        "inner join A on r2.X=A.X")
+        val table = tableEnv.sqlQuery("select r1.X, A.X from R as r1 " +
+          "inner join R as r2  on r1.Y=r2.X " +
+          "inner join S on r2.Y = S.X " +
+          "inner join R as r3  on S.Y=r3.X " +
+          "inner join A on r3.X=A.X")
 
-      val plan = tableEnv.explain(table)
+        val plan = tableEnv.explain(table)
 
-      println(plan)
+        println(plan)
 
-      table.insertInto("sink")
-      tableEnv.execute("mytest1")
+        table.insertInto("sink")
+        tableEnv.execute("mytest1")
     }
 
     it("should create statistics and apply them in order to create a plan 3") {
-      val table = tableEnv.sqlQuery("select r1.X, r2.X from R as r1 " +
-        "inner join R as r2 on r1.Y=r2.X ")
+        val table = tableEnv.sqlQuery("select r1.X, r2.X from R as r1 " +
+          "inner join R as r2 on r1.Y=r2.X ")
 
-      val plan = tableEnv.explain(table)
+        val plan = tableEnv.explain(table)
 
-      println(plan)
+        println(plan)
 
-      table.insertInto("sink")
-      tableEnv.execute("mytest2")
-
+        table.insertInto("sink")
+        tableEnv.execute("mytest2")
     }
 
   }
