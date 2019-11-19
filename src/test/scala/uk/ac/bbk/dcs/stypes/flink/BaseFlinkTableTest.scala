@@ -1,20 +1,23 @@
 package uk.ac.bbk.dcs.stypes.flink
 
-import java.util.UUID
+import java.io.{FileReader, IOException}
+import java.nio.file.{Files, Path, Paths}
 
 import org.apache.calcite.tools.RuleSets
 import org.apache.commons.io.FileUtils
 import org.apache.flink.api.common.typeinfo.{TypeInformation, Types}
 import org.apache.flink.table.api.{EnvironmentSettings, TableEnvironment}
 import org.apache.flink.table.calcite.{CalciteConfig, CalciteConfigBuilder}
-import org.apache.flink.table.catalog.{ConnectorCatalogTable, ObjectPath}
 import org.apache.flink.table.catalog.stats.CatalogTableStatistics
+import org.apache.flink.table.catalog.{Catalog, ConnectorCatalogTable, ObjectPath}
 import org.apache.flink.table.plan.rules.dataSet.{DataSetJoinRule, DataSetUnionRule}
 import org.apache.flink.table.plan.rules.datastream.DataStreamRetractionRules
 import org.apache.flink.table.sinks.{CsvTableSink, TableSink}
 import org.apache.flink.table.sources.CsvTableSource
 import org.apache.flink.types.Row
 import org.junit.Assert.assertNotNull
+
+import scala.io.Source
 
 trait BaseFlinkTableTest extends BaseFlinkTest {
   private val catalogName = "S_CAT"
@@ -33,72 +36,77 @@ trait BaseFlinkTableTest extends BaseFlinkTest {
   private val pathSink1 = new ObjectPath(databaseName, tableNameSink1)
   private val pathSink2 = new ObjectPath(databaseName, tableNameSink2)
   private val pathSinkCount = new ObjectPath(databaseName, tableNameSinkCount)
+  val sources: List[ObjectPath] = List(pathS, pathA, pathB, pathR)
+  val sinks: List[ObjectPath] = List(pathSink1, pathSink2, pathSinkCount)
 
-  private val fileNumber = 3
+  import com.google.gson.{Gson, GsonBuilder}
+
+  private val gson: Gson = new GsonBuilder().setPrettyPrinting().create
+
 
   private val settings = EnvironmentSettings.newInstance().useBlinkPlanner().inBatchMode().build()
 
   val tableEnv: TableEnvironment = TableEnvironment.create(settings)
-//  tableEnv.getConfig // access high-level configuration
-//    .getConfiguration // set low-level key-value options
-//    .setString("table.optimizer.join-reorder-enabled", "true")
+  tableEnv.getConfig // access high-level configuration
+    .getConfiguration // set low-level key-value options
+    .setString("table.optimizer.join-reorder-enabled", "true")
 
-  val catalog = tableEnv.getCatalog(tableEnv.getCurrentCatalog).orElse(null)
+  val catalog: Catalog = tableEnv.getCatalog(tableEnv.getCurrentCatalog).orElse(null)
 
   tableEnv.registerCatalog(catalogName, catalog)
   tableEnv.useCatalog(catalogName)
   tableEnv.useDatabase(databaseName)
 
-  assertNotNull(catalog)
-  catalog.createTable(pathS,
-    ConnectorCatalogTable.source(getExternalCatalogSourceTable(tableNameS, fileNumber), true),
-    false)
-  catalog.createTable(pathA,
-    ConnectorCatalogTable.source(getExternalCatalogSourceTable(tableNameA, fileNumber), true),
-    false)
-  catalog.createTable(pathR,
-    ConnectorCatalogTable.source(getExternalCatalogSourceTable(tableNameR, fileNumber), true),
-    false)
-  catalog.createTable(pathB,
-    ConnectorCatalogTable.source(getExternalCatalogSourceTable(tableNameB, fileNumber), true),
-    false)
-
-  catalog.createTable(pathSink1,
-    ConnectorCatalogTable.sink(getExternalCatalogSinkTable(tableNameSink1, fileNumber), true),
-    false
-  )
-  catalog.createTable(pathSink2,
-    ConnectorCatalogTable.sink(getExternalCatalogSinkTable(tableNameSink2, fileNumber), true),
-    false
-  )
-
-  catalog.createTable(pathSinkCount,
-    ConnectorCatalogTable.sink(getExternalCatalogSinkTable(tableNameSinkCount, fileNumber), true),
-    false
-  )
-
-  catalog.alterTableStatistics(pathS,
-    new CatalogTableStatistics(0, 1, 0L, 0L),
-    true)
-  catalog.alterTableStatistics(pathR,
-    new CatalogTableStatistics(4101642, 1, 46940747L, 46940747 * 2L),
-    true)
-  catalog.alterTableStatistics(pathA,
-    new CatalogTableStatistics(492, 1, 2807L, 2807 * 2L),
-    true)
-
-  // change calcite configuration
-//  val calciteConfig: CalciteConfig = new CalciteConfigBuilder()
-//    .addDecoRuleSet(RuleSets.ofList(DataSetJoinRule.INSTANCE))
-//    .addDecoRuleSet(RuleSets.ofList(DataSetUnionRule.INSTANCE,
-//      DataStreamRetractionRules.ACCMODE_INSTANCE)
-//    )
-//    .build()
-//
-//  tableEnv.getConfig.setPlannerConfig(calciteConfig)
+  def makeCatalog(fileNumber: Int) {
+    assertNotNull(catalog)
+    sources
+      .foreach(path => catalog.createTable(path,
+        ConnectorCatalogTable.source(getExternalCatalogSourceTable(path.getObjectName, fileNumber), true),
+        false))
+    sinks
+      .foreach(sink => catalog.createTable(sink,
+        ConnectorCatalogTable.sink(getExternalCatalogSinkTable(sink.getObjectName, fileNumber), true),
+        false
+      ))
+    addStatistic(fileNumber)
+    changeCalciteConfig()
+  }
 
 
-  private def newUUID = UUID.randomUUID().toString.replaceAll("-", "_")
+  def addStatistic(fileNumber: Int) = {
+    val filePaths = sources.map(source => {
+      val path = Paths.get(this.getClass.getResource(getFilePathAsResource(fileNumber, source.getObjectName)).getPath)
+
+      val filePathStats = Paths.get(path.toUri.getPath.concat("-stats.json"))
+
+      val statistic =
+        if (filePathStats.toFile.exists()) {
+          readStatisticFromFile(filePathStats)
+        } else {
+          val statistics = getTableTabStatistic(path)
+          writeStatisticToFile(statistics, filePathStats)
+          statistics
+        }
+
+      addStatisticToCatalog(statistic, source)
+    })
+  }
+
+  def addStatisticToCatalog(statistics: CatalogTableStatistics, op: ObjectPath) = {
+    catalog.alterTableStatistics(op, statistics, false)
+  }
+
+  def changeCalciteConfig() = {
+    //     change calcite configuration
+    val calciteConfig: CalciteConfig = new CalciteConfigBuilder()
+      .addDecoRuleSet(RuleSets.ofList(DataSetJoinRule.INSTANCE))
+      .addDecoRuleSet(RuleSets.ofList(DataSetUnionRule.INSTANCE,
+        DataStreamRetractionRules.ACCMODE_INSTANCE)
+      )
+      .build()
+
+    tableEnv.getConfig.setPlannerConfig(calciteConfig)
+  }
 
   private def cleanDir(path: String) = {
     val dir = FileUtils.getFile(path)
@@ -116,23 +124,10 @@ trait BaseFlinkTableTest extends BaseFlinkTest {
     s"$resourcePath/sink/$fileName-$fileNumber-sink"
   }
 
-  private def createTableSink(uuid: String): String = {
-    val tableNameSink = s"sink_$uuid"
-
-    println(s"table Name Sink: $tableNameSink")
-    val pathSink = new ObjectPath(databaseName, tableNameSink)
-    catalog.open()
-    catalog.createTable(pathSink,
-      ConnectorCatalogTable.sink(getExternalCatalogSinkTable(tableNameSink, fileNumber), true),
-      true)
-    catalog.close()
-    tableNameSink
-  }
-
   private def getExternalCatalogSinkTable(fileName: String, fileNumber: Int): TableSink[Row] = {
     val csvTableSink = new CsvTableSink(getResultSinkPath(fileName, fileNumber))
-    val fieldNames: Array[String] = if(fileName == tableNameSinkCount) Array("X") else Array("X", "Y")
-    val fieldTypes: Array[TypeInformation[_]] = if(fileName == tableNameSinkCount) Array(Types.LONG) else Array(Types.STRING, Types.STRING)
+    val fieldNames: Array[String] = if (fileName == tableNameSinkCount) Array("X") else Array("X", "Y")
+    val fieldTypes: Array[TypeInformation[_]] = if (fileName == tableNameSinkCount) Array(Types.LONG) else Array(Types.STRING, Types.STRING)
     csvTableSink.configure(fieldNames, fieldTypes)
   }
 
@@ -147,4 +142,24 @@ trait BaseFlinkTableTest extends BaseFlinkTest {
 
     builder.build()
   }
+
+  private def getTableTabStatistic(path: Path) = {
+    val source = Source.fromFile(path.toUri)
+    val totalSize = path.toFile.length()
+    val rowCount = source.getLines().length
+    new CatalogTableStatistics(rowCount, 1, totalSize, totalSize * 2)
+  }
+
+  private def readStatisticFromFile(path: Path): CatalogTableStatistics = {
+    gson.fromJson(new FileReader(path.toFile), classOf[CatalogTableStatistics])
+  }
+
+  @throws[IOException]
+  private def writeStatisticToFile(statistic: CatalogTableStatistics, path: Path): Unit = {
+    if (!Files.exists(path)) {
+      val json = gson.toJson(statistic)
+      FileUtils.write(path.toFile, json)
+    }
+  }
+
 }

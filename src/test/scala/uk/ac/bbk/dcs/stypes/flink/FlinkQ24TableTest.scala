@@ -31,7 +31,10 @@ import org.scalatest.FunSpec
 class FlinkQ24TableTest extends FunSpec with BaseFlinkTableTest {
 
   describe("Flink q24 table test") {
+
     cleanSink()
+    makeCatalog(3)
+
     val a = tableEnv.sqlQuery("select X as a_x, X as a_y from A")
     val b = tableEnv.sqlQuery("select X as b_x, X as b_y from B")
     val s = tableEnv.sqlQuery("select X as s_x, Y as s_y from S")

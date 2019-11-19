@@ -40,6 +40,7 @@ class FlinkQ27TableTest extends FunSpec with BaseFlinkTableTest {
   describe("Flink Talbe q27 ") {
     it("should execute p27 using file 6") {
       cleanSink()
+      makeCatalog(6)
 
       // p12(x7,x4) :- r(x4,x7), b(x7).
       val p12_1 =
