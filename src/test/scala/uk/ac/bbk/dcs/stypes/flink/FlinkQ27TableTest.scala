@@ -40,7 +40,7 @@ class FlinkQ27TableTest extends FunSpec with BaseFlinkTableTest {
   describe("Flink Talbe q27 ") {
     it("should execute p27 using file 6") {
       cleanSink()
-      makeCatalog(6)
+      makeCatalog(3)
 
       // p12(x7,x4) :- r(x4,x7), b(x7).
       val p12_1 =
@@ -90,7 +90,12 @@ class FlinkQ27TableTest extends FunSpec with BaseFlinkTableTest {
 
       // p1(x0,x7) :- r(x3,x4), p12(x7,x4), p3(x0,x3).
       val p1 = r.join(p12)
-        .where( "r_Y=p12_Y").select("*").join(p3).where("r_X=p3_Y").select("p3_X as X, p12_X as Y")
+        .where( "r_Y=p12_Y")
+        .select("*")
+        .join(p3).
+        where("r_X=p3_Y")
+        .select("p3_X as X, p12_X as Y")
+          .distinct()
 
       println( tableEnv.explain(p1) )
 
