@@ -29,11 +29,17 @@ import org.scalatest.FunSpec
   *
   * Flink test based on the rewriting for query q15.cq  using  lines.dlp
   *
-  * p1(x0,x7) :- r(x3,x4), p12(x7,x4), p3(x0,x3).
-  * p3(x0,x3) :- r(x0,x3), a(x0).
-  * p3(x0,x3) :- r(x1,x2), r(x2,x3), s(x0,x1).
-  * p12(x7,x4) :- r(x5,x6), r(x4,x5), s(x6,x7).
-  * p12(x7,x4) :- r(x4,x7), b(x7).
+  * p32(x7,x9) :- r(x7,x8), s(x8,x9).
+  * p32(x9,x9) :- b(x9).
+  * p27(x12,x7) :- a(x8), r(x7,x8), r(x11,x12), r(x8,x11).
+  * p27(x12,x7) :- r(x9,x10), p32(x7,x9), r(x11,x12), r(x10,x11).
+  * p5(x0,x3) :- r(x0,x3), a(x0).
+  * p5(x0,x3) :- r(x1,x2), r(x2,x3), s(x0,x1).
+  * p3(x12,x8) :- r(x10,x11), r(x11,x12), a(x8), s(x8,x9), r(x9,x10).
+  * p3(x12,x8) :- a(x8), r(x11,x12), r(x8,x11).
+  * p1(x0,x12) :- p3(x12,x6), r(x3,x4), r(x5,x6), r(x4,x5), p5(x0,x3), a(x6).
+  * p1(x0,x12) :- p5(x0,x3), r(x4,x5), b(x5), r(x3,x4), p27(x12,x5).
+  * p1(x0,x12) :- s(x6,x7), p5(x0,x3), r(x4,x5), r(x5,x6), r(x3,x4), p27(x12,x7).
   *
   */
 class FlinkQ27Test extends FunSpec with BaseFlinkTest{
