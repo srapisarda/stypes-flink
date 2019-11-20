@@ -23,7 +23,7 @@ package uk.ac.bbk.dcs.stypes.flink
 import org.scalatest.FunSpec
 
 /**
- * Created by salvo on 01/01/2018.
+ * Created by salvo on 20/11/2019.
  *
  * Flink test based on the rewriting for query q27.cq  using  lines.dlp
  *
