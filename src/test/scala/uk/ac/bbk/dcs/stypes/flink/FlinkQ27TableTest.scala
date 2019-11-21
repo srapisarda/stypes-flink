@@ -42,10 +42,27 @@ import org.scalatest.FunSpec
  */
 class FlinkQ27TableTest extends FunSpec with BaseFlinkTableTest {
 
-  describe("Flink Talbe q27 ") {
-    it("should execute p27 using file 6") {
-      cleanSink()
-      makeCatalog(3)
+  describe("Flink q27 table test") {
+    val jobName: String = "q27"
+
+    ignore("should read and execute the 'q27.cq' query rewrote for 1.ffl file set {A, B, R, S}") {
+      execute(1, 59000)
+    }
+
+    ignore("should read and execute the 'q27.cq' query rewrote for 2.ffl file set {A, B, R, S}") {
+      execute(2, 106895)
+    }
+
+    it("should read and execute the 'q27.cq' query rewrote for 3.ffl file set {A, B, R, S}") {
+      execute(3, 570000)
+    }
+
+    ignore("should read and execute the 'q27.cq' query rewrote for 4.ffl file set {A, B, R, S}") {
+      execute(4, 570000)
+    }
+
+    def execute(fileNumber: Int, expected: Int) = {
+      val tableEnv = makeTableEnvironment(fileNumber, jobName)
 
       val a = tableEnv.sqlQuery("select X as a_x, X as a_y from A")
       val b = tableEnv.sqlQuery("select X as b_x, X as b_y from B")
@@ -111,18 +128,21 @@ class FlinkQ27TableTest extends FunSpec with BaseFlinkTableTest {
         .join(r).where("x5=r_x").select("x0, r_y as x6")
         .join(s).where("x6=s_x").select("x0, s_y as x7")
         .join(p27).where("x7=p27_y").select("x0 as x, p27_x as y")
-      val p1= p1_1.union(p1_2).union(p1_3)
-
+      val p1 = p1_1.union(p1_2).union(p1_3)
 
       println(tableEnv.explain(p1))
 
-      p1.insertInto(tableNameSink1)
+      val catalog = tableEnv.getCatalog(catalogName)
+      if (catalog.isPresent) {
+        p1.insertInto(getSinkTableName(tableNameSink1Prefix, catalog.get()))
 
-      //val count = tableEnv sqlQuery( s"select count(X) as X from $tableNameSink1" )
+        val res = p1.select("y.count")
 
-      //count.insertInto(tableNameSinkCount)
-
+        res.insertInto(getSinkTableName(tableNameSinkCountPrefix, catalog.get()))
+      }
       tableEnv.execute("Q27 sql")
+
+      assert(getCountFromSink(fileNumber, catalog.get(), jobName) == expected)
     }
   }
 

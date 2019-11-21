@@ -20,7 +20,10 @@ package uk.ac.bbk.dcs.stypes.flink
  * #L%
  */
 
-import org.apache.flink.table.api.Table
+
+import org.apache.flink.api.java.DataSet
+import org.apache.flink.api.scala._
+import org.apache.flink.types.Row
 import org.scalatest.FunSpec
 
 /**
@@ -32,9 +35,10 @@ import org.scalatest.FunSpec
 class FlinkQ24TableTest extends FunSpec with BaseFlinkTableTest {
 
   describe("Flink q24 table test") {
+    val jobName: String = "q24"
 
     ignore("should read and execute the 'q24.cq' query rewrote for 1.ffl file set {A, B, R, S}") {
-      execute(1, 2832 )
+      execute(1, 2832)
     }
 
     ignore("should read and execute the 'q24.cq' query rewrote for 2.ffl file set {A, B, R, S}") {
@@ -58,15 +62,13 @@ class FlinkQ24TableTest extends FunSpec with BaseFlinkTableTest {
     }
 
 
-    def execute(fileNumber:Int, expected:Int) = {
-      cleanSink()
-      makeCatalog(fileNumber)
+    def execute(fileNumber: Int, expected: Int) = {
+      val tableEnv = makeTableEnvironment(fileNumber, jobName)
 
       val a = tableEnv.sqlQuery("select X as a_x, X as a_y from A")
       val b = tableEnv.sqlQuery("select X as b_x, X as b_y from B")
       val s = tableEnv.sqlQuery("select X as s_x, Y as s_y from S")
       val r = tableEnv.sqlQuery("select X as r_x, Y as r_y from R")
-
       // p11(x9,x9) :- b(x9).
       // p11(x7,x9) :- r(x7,x8), s(x8,x9).
       val p11 = b.select("b_x as x, b_y as y")
@@ -97,15 +99,19 @@ class FlinkQ24TableTest extends FunSpec with BaseFlinkTableTest {
 
 
       println(tableEnv.explain(p1))
-      p1.insertInto(tableNameSink1)
 
-      var count = p1.groupBy("x").select("x.count as count")
-      count.insertInto(tableNameSinkCount)
+      val catalog = tableEnv.getCatalog(catalogName)
+      if (catalog.isPresent) {
+        p1.insertInto(getSinkTableName(tableNameSink1Prefix, catalog.get()))
 
+        val res = p1.select("y.count")
+
+        val tableSinkCount = getSinkTableName(tableNameSinkCountPrefix, catalog.get())
+        res.insertInto(tableSinkCount)
+
+      }
       tableEnv.execute("Q24 sql")
-
-//      val p1_count = p1.count
-
+      assert(getCountFromSink(fileNumber, catalog.get(), jobName) == expected)
     }
   }
 

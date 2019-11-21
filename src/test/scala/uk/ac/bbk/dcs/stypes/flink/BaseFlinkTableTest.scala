@@ -22,10 +22,12 @@ package uk.ac.bbk.dcs.stypes.flink
 
 import java.io.{FileReader, IOException}
 import java.nio.file.{Files, Path, Paths}
+import java.util.UUID
 
 import org.apache.calcite.tools.RuleSets
 import org.apache.commons.io.FileUtils
 import org.apache.flink.api.common.typeinfo.{TypeInformation, Types}
+import org.apache.flink.table.api.scala.BatchTableEnvironment
 import org.apache.flink.table.api.{EnvironmentSettings, TableEnvironment}
 import org.apache.flink.table.calcite.{CalciteConfig, CalciteConfigBuilder}
 import org.apache.flink.table.catalog.stats.CatalogTableStatistics
@@ -38,26 +40,25 @@ import org.apache.flink.types.Row
 import org.junit.Assert.assertNotNull
 
 import scala.io.Source
+import scala.collection.JavaConverters._
+
 
 trait BaseFlinkTableTest extends BaseFlinkTest {
-  private val catalogName = "S_CAT"
-  private val databaseName = "default_database"
+  val catalogName = "S_CAT"
+  val databaseName = "default_database"
   private val tableNameS = "S"
   private val tableNameA = "A"
   private val tableNameR = "R"
   private val tableNameB = "B"
-  val tableNameSink1 = s"sink_1"
-  val tableNameSink2 = s"sink_2"
-  val tableNameSinkCount = s"sink_count"
+  val tableNameSink1Prefix = s"sink_1"
+  val tableNameSink2Prefix = s"sink_2"
+  val tableNameSinkCountPrefix = s"sink_count"
   private val pathS = new ObjectPath(databaseName, tableNameS)
   private val pathA = new ObjectPath(databaseName, tableNameA)
   private val pathR = new ObjectPath(databaseName, tableNameR)
   private val pathB = new ObjectPath(databaseName, tableNameB)
-  private val pathSink1 = new ObjectPath(databaseName, tableNameSink1)
-  private val pathSink2 = new ObjectPath(databaseName, tableNameSink2)
-  private val pathSinkCount = new ObjectPath(databaseName, tableNameSinkCount)
   val sources: List[ObjectPath] = List(pathS, pathA, pathB, pathR)
-  val sinks: List[ObjectPath] = List(pathSink1, pathSink2, pathSinkCount)
+  val sinkPrefixes: List[String] = List(tableNameSink1Prefix, tableNameSink2Prefix, tableNameSinkCountPrefix)
 
   import com.google.gson.{Gson, GsonBuilder}
 
@@ -66,34 +67,60 @@ trait BaseFlinkTableTest extends BaseFlinkTest {
 
   private val settings = EnvironmentSettings.newInstance().useBlinkPlanner().inBatchMode().build()
 
-  val tableEnv: TableEnvironment = TableEnvironment.create(settings)
-  tableEnv.getConfig // access high-level configuration
-    .getConfiguration // set low-level key-value options
-    .setString("table.optimizer.join-reorder-enabled", "true")
 
-  val catalog: Catalog = tableEnv.getCatalog(tableEnv.getCurrentCatalog).orElse(null)
 
-  tableEnv.registerCatalog(catalogName, catalog)
-  tableEnv.useCatalog(catalogName)
-  tableEnv.useDatabase(databaseName)
 
-  def makeCatalog(fileNumber: Int) {
+//  val batchTableEnv: BatchTableEnvironment = BatchTableEnvironment.create(env)
+//  batchTableEnv.registerCatalog(catalogName, catalog)
+//  batchTableEnv.useCatalog(catalogName)
+//  batchTableEnv.useDatabase(databaseName)
+//  batchTableEnv.getConfig
+//    .getConfiguration // set low-level key-value options
+//    .setString("table.optimizer.join-reorder-enabled", "true")
+
+
+  def makeTableEnvironment(fileNumber: Int, jobName: String) : TableEnvironment = {
+    val tableEnv: TableEnvironment = TableEnvironment.create(settings)
+    tableEnv.getConfig // access high-level configuration
+      .getConfiguration // set low-level key-value options
+      .setString("table.optimizer.join-reorder-enabled", "true")
+
+    val catalog: Catalog = tableEnv.getCatalog(tableEnv.getCurrentCatalog).orElse(null)
+
+    tableEnv.registerCatalog(catalogName, catalog)
+    tableEnv.useCatalog(catalogName)
+    tableEnv.useDatabase(databaseName)
+
     assertNotNull(catalog)
+
     sources
-      .foreach(path => catalog.createTable(path,
-        ConnectorCatalogTable.source(getExternalCatalogSourceTable(path.getObjectName, fileNumber), true),
-        false))
-    sinks
-      .foreach(sink => catalog.createTable(sink,
-        ConnectorCatalogTable.sink(getExternalCatalogSinkTable(sink.getObjectName, fileNumber), true),
-        false
-      ))
-    addStatistic(fileNumber)
-    changeCalciteConfig()
+      .foreach(path => {
+        catalog.createTable(path,
+          ConnectorCatalogTable.source(getExternalCatalogSourceTable(path.getObjectName, fileNumber), false),
+          false)
+      })
+
+    val uuid = newUUID
+
+    println(s"\n------------> using sink uuid: $uuid\n")
+
+    sinkPrefixes
+      .foreach(sinkPrefix => {
+        val sinkName = s"${sinkPrefix}_$uuid"
+        catalog.createTable(new ObjectPath(databaseName,sinkName),
+          ConnectorCatalogTable.sink(getExternalCatalogSinkTable(sinkName, fileNumber, jobName ), true),
+          false
+        )
+      })
+    addStatisticToCatalog(fileNumber, catalog)
+    changeCalciteConfig(tableEnv)
+    tableEnv
   }
 
+  def getSinkTableName(sinkTableNamePrefix: String, catalog: Catalog ): String =
+    catalog.listTables(databaseName).asScala.find(_.startsWith(sinkTableNamePrefix)).last
 
-  def addStatistic(fileNumber: Int) = {
+  def addStatisticToCatalog(fileNumber: Int, catalog: Catalog): Unit = {
     val filePaths = sources.map(source => {
       val path = Paths.get(this.getClass.getResource(getFilePathAsResource(fileNumber, source.getObjectName)).getPath)
 
@@ -108,15 +135,11 @@ trait BaseFlinkTableTest extends BaseFlinkTest {
           statistics
         }
 
-      addStatisticToCatalog(statistic, source)
+      catalog.alterTableStatistics(source, statistic, false)
     })
   }
 
-  def addStatisticToCatalog(statistics: CatalogTableStatistics, op: ObjectPath) = {
-    catalog.alterTableStatistics(op, statistics, false)
-  }
-
-  def changeCalciteConfig() = {
+  def changeCalciteConfig(tableEnvironment: TableEnvironment) = {
     //     change calcite configuration
     val calciteConfig: CalciteConfig = new CalciteConfigBuilder()
       .addDecoRuleSet(RuleSets.ofList(DataSetJoinRule.INSTANCE))
@@ -125,7 +148,7 @@ trait BaseFlinkTableTest extends BaseFlinkTest {
       )
       .build()
 
-    tableEnv.getConfig.setPlannerConfig(calciteConfig)
+    tableEnvironment.getConfig.setPlannerConfig(calciteConfig)
   }
 
   private def cleanDir(path: String) = {
@@ -134,20 +157,20 @@ trait BaseFlinkTableTest extends BaseFlinkTest {
       FileUtils.cleanDirectory(dir)
   }
 
-  def cleanSink() = {
+  private def cleanSink() = {
     val resourcePath = this.getClass.getResource(getFilePathFolderAsResource).getPath
     cleanDir(s"$resourcePath/sink")
   }
 
-  private def getResultSinkPath(fileName: String, fileNumber: Int) = {
+  private def getResultSinkPath(fileName: String, fileNumber: Int, jobName: String) = {
     val resourcePath = this.getClass.getResource(getFilePathFolderAsResource).getPath
-    s"$resourcePath/sink/$fileName-$fileNumber-sink"
+    s"$resourcePath/sink/$fileName-$fileNumber-$jobName"
   }
 
-  private def getExternalCatalogSinkTable(fileName: String, fileNumber: Int): TableSink[Row] = {
-    val csvTableSink = new CsvTableSink(getResultSinkPath(fileName, fileNumber))
-    val fieldNames: Array[String] = if (fileName == tableNameSinkCount) Array("X") else Array("X", "Y")
-    val fieldTypes: Array[TypeInformation[_]] = if (fileName == tableNameSinkCount) Array(Types.LONG) else Array(Types.STRING, Types.STRING)
+  private def getExternalCatalogSinkTable(fileName: String, fileNumber: Int, jobName: String): TableSink[Row] = {
+    val csvTableSink = new CsvTableSink(getResultSinkPath(fileName, fileNumber, jobName ))
+    val fieldNames: Array[String] = if (fileName.startsWith(tableNameSinkCountPrefix)) Array("X") else Array("X", "Y")
+    val fieldTypes: Array[TypeInformation[_]] = if (fileName.startsWith(tableNameSinkCountPrefix)) Array(Types.LONG) else Array(Types.STRING, Types.STRING)
     csvTableSink.configure(fieldNames, fieldTypes)
   }
 
@@ -180,6 +203,16 @@ trait BaseFlinkTableTest extends BaseFlinkTest {
       val json = gson.toJson(statistic)
       FileUtils.write(path.toFile, json)
     }
+  }
+
+  private def newUUID = UUID.randomUUID().toString.replaceAll("-", "_")
+
+   def getCountFromSink(fileNumber: Int, catalog: Catalog, jobName: String): Int = {
+    def sinkTableName = getSinkTableName(tableNameSinkCountPrefix, catalog)
+
+    def source = Source.fromFile(getResultSinkPath(sinkTableName, fileNumber, jobName))
+
+    source.getLines.toList.head.toInt
   }
 
 }
