@@ -49,7 +49,7 @@ class FlinkQ27TableTest extends FunSpec with BaseFlinkTableTest {
       execute(1, 59000)
     }
 
-    ignore("should read and execute the 'q27.cq' query rewrote for 2.ffl file set {A, B, R, S}") {
+    it("should read and execute the 'q27.cq' query rewrote for 2.ffl file set {A, B, R, S}") {
       execute(2, 106895)
     }
 
@@ -61,7 +61,12 @@ class FlinkQ27TableTest extends FunSpec with BaseFlinkTableTest {
       execute(4, 570000)
     }
 
+    it("should read and execute the 'q27.cq' query rewrote for 5.ffl file set {A, B, R, S}") {
+      execute(5, 570000)
+    }
+
     def execute(fileNumber: Int, expected: Int) = {
+
       val tableEnv = makeTableEnvironment(fileNumber, jobName)
 
       val a = tableEnv.sqlQuery("select X as a_x, X as a_y from A")
@@ -128,7 +133,7 @@ class FlinkQ27TableTest extends FunSpec with BaseFlinkTableTest {
         .join(r).where("x5=r_x").select("x0, r_y as x6")
         .join(s).where("x6=s_x").select("x0, s_y as x7")
         .join(p27).where("x7=p27_y").select("x0 as x, p27_x as y")
-      val p1 = p1_1.union(p1_2).union(p1_3)
+      val p1 = p1_1.union(p1_2).union(p1_3).distinct()
 
       println(tableEnv.explain(p1))
 

@@ -27,6 +27,7 @@ import org.apache.flink.api.scala._
 import org.apache.flink.table.api.{Table, Types}
 import org.apache.flink.table.sources.CsvTableSource
 import org.slf4j.{Logger, LoggerFactory}
+import uk.ac.bbk.dcs.stypes.flink.common.Configuration
 
 /**
   * Created by:
@@ -39,7 +40,11 @@ trait BaseFlinkRewriting {
   val log: Logger = LoggerFactory.getLogger(this.getClass)
   val env: ExecutionEnvironment = ExecutionEnvironment.getExecutionEnvironment
 //  val pathToBenchmarkNDL_SQL = "hdfs:///user/hduser/stypes/resources/benchmark/Lines"
-  val pathToBenchmarkNDL_SQL = "src/test/resources/benchmark/Lines"
+  val pathToBenchmarkNDL_SQL: String =
+    if (Configuration.getEnvironment == "hadoop")
+      "hdfs:///user/hduser/stypes/resources/benchmark/Lines"
+    else
+      "src/test/resources/benchmark/Lines"
   implicit val typeLongInfo: TypeInformation[(Long, Long)] = TypeInformation.of(classOf[(Long, Long)])
   implicit val typeRelation2Info: TypeInformation[Relation2] = TypeInformation.of(classOf[Relation2])
 

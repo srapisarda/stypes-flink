@@ -14,6 +14,7 @@ libraryDependencies ++= Seq(
   ,"org.apache.flink" %% "flink-table-api-scala-bridge" % flinkVersion
   ,"org.apache.flink" %% "flink-table-planner-blink" % flinkVersion
   ,"org.apache.flink" %% "flink-table-planner" % flinkVersion
+  ,"com.typesafe" % "config" % "1.4.0"
   ,"com.google.guava" % "guava" % "28.0-jre"
   ,"com.google.code.gson" % "gson" % "2.8.6"
   ,"org.scalatest" %% "scalatest" % "3.0.4" % "test"
