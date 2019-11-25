@@ -58,6 +58,9 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
 
     val p1 = tableRewritingEvaluation.apply(fileNumber, jobName, tableEnv)
     val catalog = tableEnv.getCatalog(catalogName)
+
+
+
     if (catalog.isPresent) {
       p1.insertInto(getSinkTableName(tableNameSink1Prefix, catalog.get()))
       val res = p1.select("y.count")
@@ -119,7 +122,6 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
 
       val fs = FileSystem.getLocalFileSystem
       val filePathStats = new Path(path.toUri.getPath.concat("-stats.json"))
-      fs.createRecoverableWriter()
       val statistic =
         if (fs.exists(filePathStats)) {
           readStatisticFromFile(filePathStats)
@@ -177,23 +179,27 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
     builder.build()
   }
 
+  private def getStream(path: Path) = {
+    FileSystem.get(path.toUri).open(path)
+  }
+
   private def getTableTabStatistic(path: Path) = {
     val source = FileSystem.get(path.toUri)
     val fileStatus = source.getFileStatus(path)
     val totalSize = fileStatus.getLen
-    val file: DataSet[String] = env.readTextFile(path.toUri.getPath)
-    file.count()
-    val inputStream = source.open(path)
-    inputStream.skip(Long.MaxValue)
-    val rowCount = inputStream.getPos
+    val stream = getStream(path)
+    val br = new BufferedReader(new InputStreamReader(stream))
+    val rowCount = br.lines().count()
+    stream.close()
     new CatalogTableStatistics(rowCount, 1, totalSize, totalSize * 2)
-
   }
 
   private def readStatisticFromFile(path: Path): CatalogTableStatistics = {
-    val stream = FileSystem.get(path.toUri).open(path)
+    val stream = getStream(path)
     val br = new BufferedReader(new InputStreamReader(stream))
-    gson.fromJson(br, classOf[CatalogTableStatistics])
+    val statistics  = gson.fromJson(br, classOf[CatalogTableStatistics])
+    stream.close()
+    statistics
   }
 
   @throws[IOException]
