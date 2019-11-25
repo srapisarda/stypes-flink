@@ -7,7 +7,7 @@ import org.apache.calcite.tools.RuleSets
 import org.apache.flink.api.common.typeinfo.{TypeInformation, Types}
 import org.apache.flink.api.scala.DataSet
 import org.apache.flink.core.fs.{FileSystem, Path}
-import org.apache.flink.table.api.{EnvironmentSettings, TableEnvironment}
+import org.apache.flink.table.api.{EnvironmentSettings, Table, TableEnvironment}
 import org.apache.flink.table.calcite.{CalciteConfig, CalciteConfigBuilder}
 import org.apache.flink.table.catalog.stats.CatalogTableStatistics
 import org.apache.flink.table.catalog.{Catalog, ConnectorCatalogTable, ObjectPath}
@@ -38,10 +38,10 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
   private val pathB = new ObjectPath(databaseName, tableNameB)
   val sources: List[ObjectPath] = List(pathS, pathA, pathB, pathR)
   val sinkPrefixes: List[String] = List(tableNameSink1Prefix, tableNameSink2Prefix, tableNameSinkCountPrefix)
-  private val isLocalResources = Configuration.getEnvironment == RewritingEnvironment.Local.toString
+  private val isLocalResources = Configuration.getEnvironment == RewritingEnvironment.Local.toString.toLowerCase()
   private val pathToBenchmarkTableNDL_SQL =
     if (isLocalResources)
-      pathToBenchmarkNDL_SQL.replace("src/test/resources/", "")
+      "/" + pathToBenchmarkNDL_SQL.replace("src/test/resources/", "")
     else
       pathToBenchmarkNDL_SQL
 
@@ -53,11 +53,19 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
 
   private val settings = EnvironmentSettings.newInstance().useBlinkPlanner().inBatchMode().build()
 
+  def executeTableRewriting(fileNumber: Int, serial: String, jobName: String, tableEnv: TableEnvironment,
+                            tableRewritingEvaluation: (Int, String, TableEnvironment) => Table): Unit = {
 
-  def executeTableRewriting(fileNumber: Int, serial: String, str: String, tableRewritingEvaluation: (Int, String) => Unit): Unit = {
-    ???
+    val p1 = tableRewritingEvaluation.apply(fileNumber, jobName, tableEnv)
+    val catalog = tableEnv.getCatalog(catalogName)
+    if (catalog.isPresent) {
+      p1.insertInto(getSinkTableName(tableNameSink1Prefix, catalog.get()))
+      val res = p1.select("y.count")
+      res.insertInto(getSinkTableName(tableNameSinkCountPrefix, catalog.get()))
+    }
+    tableEnv.execute("Q27 sql")
+
   }
-
 
   def makeTableEnvironment(fileNumber: Int, jobName: String): TableEnvironment = {
     val tableEnv: TableEnvironment = TableEnvironment.create(settings)
@@ -70,7 +78,6 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
     tableEnv.registerCatalog(catalogName, catalog)
     tableEnv.useCatalog(catalogName)
     tableEnv.useDatabase(databaseName)
-
 
     sources
       .foreach(path => {
@@ -158,7 +165,8 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
   }
 
   private def getExternalCatalogSourceTable(fileName: String, fileNumber: Int): CsvTableSource = {
-    val resourcePath = this.getClass.getResource(getFilePathAsResource(fileNumber, fileName)).getPath
+    val filePath = getFilePathAsResource(fileNumber, fileName)
+    val resourcePath = this.getClass.getResource(filePath).getPath
     val builder = CsvTableSource.builder()
     builder.path(resourcePath)
     builder.field("X", Types.STRING)
@@ -171,13 +179,13 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
 
   private def getTableTabStatistic(path: Path) = {
     val source = FileSystem.get(path.toUri)
-    val fileStatus =  source.getFileStatus(path)
-    val totalSize =  fileStatus.getLen
+    val fileStatus = source.getFileStatus(path)
+    val totalSize = fileStatus.getLen
     val file: DataSet[String] = env.readTextFile(path.toUri.getPath)
     file.count()
-    val inputStream =  source.open(path)
+    val inputStream = source.open(path)
     inputStream.skip(Long.MaxValue)
-    val rowCount =  inputStream.getPos
+    val rowCount = inputStream.getPos
     new CatalogTableStatistics(rowCount, 1, totalSize, totalSize * 2)
 
   }
@@ -191,7 +199,7 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
   @throws[IOException]
   private def writeStatisticToFile(statistic: CatalogTableStatistics, path: Path): Unit = {
     val source: FileSystem = FileSystem.get(path.toUri)
-    if (! source.exists(path)) {
+    if (!source.exists(path)) {
       val json = gson.toJson(statistic)
       val outputStream = source.create(path, FileSystem.WriteMode.OVERWRITE)
       val outputStreamWriter = new OutputStreamWriter(outputStream, "UTF-8")
