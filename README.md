@@ -1,7 +1,6 @@
 # STypeS-Flink
 
-It is possible to evaluate [**STypeS NDL rewriting**](https://github.com/srapisarda/stypes) using Apache Flink.
-It is easy to write an Apache Flink program. If, for example, we are taking into consideration the following NDL script:
+It is possible to evaluate [**STypeS NDL rewriting**](https://github.com/srapisarda/stypes) using Apache Flink. If, for example, we are taking into consideration the following Nonrecursive Datalog (NDL) script:
  ```
 p1(x,y) :− s(z,y), s(x,y).
 p1(x,y) :− s(x,y), r(y,z).
@@ -30,20 +29,20 @@ object FlinkRewriting {
  }
 ```
 
-How we can note from the listing above it that the program it is compact and more clear. 
+How we can note, the Flink script above is a compact and clear evaluation of the previous NDL query showed earlier. 
 The **stringMapper** function, transforms a string in a tuple **(t1,t2)** where **t1** and **t2** are both string. 
-After, it is created an Apache Flink execution environment. 
-The variable **r** and **s** are respectably created two DataSet[String, String] from a CSV file resources stored in hadoop.
-Later on it is created the fist join operation. 
-In Flink the join from two tuples **tp_x = (t1, . . . , tn)** and **tp_y(t1,...,tm)** is a new tuple **tp_x_y = (tp1,tp2)**. 
+The variable **r** and **s** are respectably two DataSet[String, String] made from a CSV resource file stored in Apache Hadoop.
+
+After, in the script, is also performed a join operation. 
+In Flink, the join made from two tuples **tp_x = (t1, . . . , tn)** and **tp_y(t1,...,tm)** is a new tuple **tp_x_y = (tp1,tp2)**. 
 If for example **tp_1 = (t1,t2)** and **tp_2 = (t1,t2)** Flink creates a **tp_n = [(t1, t2), (t1, t2)]**. 
 The function **where** is applied to the relation on **left-hand side LHS**, whereas the function **equalTo** is used for the **right-hand side RHS** relation. 
 The index of the terms present in the **LHS** and **RHS** relations are starter form **0** (zero) to **n = t_n − 1**, where **t_n** is the total number of terms. 
-If for instance we where doing a different join **p(x, y) :- w(x, y, z), v(z, x, y)** the join operation will be
+If for instance, we were doing a different join **p(x, y) :- w(x, y, z), v(z, x, y)** the join operation will be
 ```scala
 val p = w.join(v).where(0,1,2).equalTo(1,2,0).map(t => (t. 1. 1, t. 2. 3)
 ```
-In Apache Flink it is possible to decide which is the degree of parallelization that we want to use during the execution of the script. 
+In Apache Flink it is possible to decide which is the degree of parallelization that we want to use during the script evaluation. 
 It is important to know that the level of parallelism cannot be bigger of the total number of **vcores** the cluster contains. 
 Moreover, it is not possible to use all the cluster **vcores** because some of them can be busy in executing other tasks, 
-for example, some can be dedicated to Hadoop administration.
+for example, some can be dedicated to Hadoop some administration functionality.
