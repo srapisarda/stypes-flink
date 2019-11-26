@@ -7,7 +7,7 @@ import org.apache.flink.table.api.{Table, TableEnvironment}
 object FlinkRewritingSql4q24 extends BaseFlinkTableRewriting {
   val DEFAULT_TTL_FILE_NUMBER = 3
 
-  private def run(fileNumber: Int, serial: String = UUID.randomUUID().toString): Unit = {
+  def run(fileNumber: Int, serial: String = UUID.randomUUID().toString): Unit = {
     val jobName = "sql-q24"
     val tableEnv: TableEnvironment = makeTableEnvironment(fileNumber, jobName )
     executeTableRewriting(fileNumber, serial, jobName, tableEnv, tableRewritingEvaluation)

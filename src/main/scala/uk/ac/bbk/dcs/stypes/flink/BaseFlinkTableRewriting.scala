@@ -5,7 +5,8 @@ import java.util.UUID
 
 import org.apache.calcite.tools.RuleSets
 import org.apache.flink.api.common.typeinfo.{TypeInformation, Types}
-import org.apache.flink.api.scala.DataSet
+import org.apache.flink.calcite.shaded.com.fasterxml.jackson.databind
+import org.apache.flink.calcite.shaded.com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.flink.core.fs.{FileSystem, Path}
 import org.apache.flink.table.api.{EnvironmentSettings, Table, TableEnvironment}
 import org.apache.flink.table.calcite.{CalciteConfig, CalciteConfigBuilder}
@@ -16,7 +17,7 @@ import org.apache.flink.table.plan.rules.datastream.DataStreamRetractionRules
 import org.apache.flink.table.sinks.{CsvTableSink, TableSink}
 import org.apache.flink.table.sources.CsvTableSource
 import org.apache.flink.types.Row
-import uk.ac.bbk.dcs.stypes.flink.common.{Configuration, RewritingEnvironment}
+import uk.ac.bbk.dcs.stypes.flink.common.{CatalogStatistics, Configuration, RewritingEnvironment}
 
 import scala.collection.JavaConverters._
 import scala.io.Source
@@ -39,17 +40,16 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
   val sources: List[ObjectPath] = List(pathS, pathA, pathB, pathR)
   val sinkPrefixes: List[String] = List(tableNameSink1Prefix, tableNameSink2Prefix, tableNameSinkCountPrefix)
   private val isLocalResources = Configuration.getEnvironment == RewritingEnvironment.Local.toString.toLowerCase()
-  private val pathToBenchmarkTableNDL_SQL =
-    if (isLocalResources)
-      "/" + pathToBenchmarkNDL_SQL.replace("src/test/resources/", "")
-    else
-      pathToBenchmarkNDL_SQL
+  private val pathToBenchmarkTableNDL_SQL = Configuration.getDataPath
+//    if (isLocalResources)
+//      "/" + pathToBenchmarkNDL_SQL.replace("src/test/resources/", "")
+//    else
+//      pathToBenchmarkNDL_SQL
 
 
   import com.google.gson.{Gson, GsonBuilder}
 
-  private val gson: Gson = new GsonBuilder().setPrettyPrinting().create
-
+  val objectMapper: ObjectMapper = new databind.ObjectMapper()
 
   private val settings = EnvironmentSettings.newInstance().useBlinkPlanner().inBatchMode().build()
 
@@ -59,14 +59,14 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
     val p1 = tableRewritingEvaluation.apply(fileNumber, jobName, tableEnv)
     val catalog = tableEnv.getCatalog(catalogName)
 
-
+    println(tableEnv.explain(p1))
 
     if (catalog.isPresent) {
       p1.insertInto(getSinkTableName(tableNameSink1Prefix, catalog.get()))
       val res = p1.select("y.count")
       res.insertInto(getSinkTableName(tableNameSinkCountPrefix, catalog.get()))
     }
-    tableEnv.execute("Q27 sql")
+    tableEnv.execute(s"$jobName as ")
 
   }
 
@@ -114,15 +114,15 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
 
     sources.map(source => {
       val path = new Path(
-        if (isLocalResources)
-          this.getClass.getResource(getFilePathAsResource(fileNumber, source.getObjectName)).getPath
-        else
+//        if (isLocalResources)
+//          this.getClass.getResource(getFilePathAsResource(fileNumber, source.getObjectName)).getPath
+//        else
           getFilePathAsResource(fileNumber, source.getObjectName)
       )
 
       val fs = FileSystem.getLocalFileSystem
       val filePathStats = new Path(path.toUri.getPath.concat("-stats.json"))
-      val statistic =
+      val statistics =
         if (fs.exists(filePathStats)) {
           readStatisticFromFile(filePathStats)
         }
@@ -132,7 +132,8 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
           statistics
         }
 
-      catalog.alterTableStatistics(source, statistic, false)
+      val statistic = getTableTabStatistic(path)
+      catalog.alterTableStatistics(source, statistics, false)
     })
   }
 
@@ -151,9 +152,9 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
   private def getResultSinkPath(fileName: String, fileNumber: Int, jobName: String) = {
 
     val resourcePath =
-      if (Configuration.getEnvironment == RewritingEnvironment.Local.toString)
-        this.getClass.getResource(getFilePathFolderAsResource).getPath
-      else
+//      if (Configuration.getEnvironment == RewritingEnvironment.Local.toString)
+//        this.getClass.getResource(getFilePathFolderAsResource).getPath
+//      else
         getFilePathFolderAsResource
 
     s"$resourcePath/sink/$fileName-$fileNumber-$jobName"
@@ -168,7 +169,7 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
 
   private def getExternalCatalogSourceTable(fileName: String, fileNumber: Int): CsvTableSource = {
     val filePath = getFilePathAsResource(fileNumber, fileName)
-    val resourcePath = this.getClass.getResource(filePath).getPath
+    val resourcePath = filePath // this.getClass.getResource(filePath).getPath
     val builder = CsvTableSource.builder()
     builder.path(resourcePath)
     builder.field("X", Types.STRING)
@@ -197,7 +198,7 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
   private def readStatisticFromFile(path: Path): CatalogTableStatistics = {
     val stream = getStream(path)
     val br = new BufferedReader(new InputStreamReader(stream))
-    val statistics  = gson.fromJson(br, classOf[CatalogTableStatistics])
+    val statistics  = objectMapper.readValue(br, classOf[CatalogStatistics])
     stream.close()
     statistics
   }
@@ -206,7 +207,7 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
   private def writeStatisticToFile(statistic: CatalogTableStatistics, path: Path): Unit = {
     val source: FileSystem = FileSystem.get(path.toUri)
     if (!source.exists(path)) {
-      val json = gson.toJson(statistic)
+      val json = objectMapper.writeValueAsString(statistic)
       val outputStream = source.create(path, FileSystem.WriteMode.OVERWRITE)
       val outputStreamWriter = new OutputStreamWriter(outputStream, "UTF-8")
       outputStreamWriter.write(json)

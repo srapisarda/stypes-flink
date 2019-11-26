@@ -8,4 +8,6 @@ object Configuration {
   def getEnvironment: String = {
     instance.getString("rewriting.environment.type")
   }
+
+  def getDataPath = instance.getString("rewriting.pathToBenchmarkNDL")
 }
