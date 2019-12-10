@@ -112,7 +112,7 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
   def addStatisticToCatalog(fileNumber: Int, catalog: Catalog): Unit = {
     //    FileSystem.get()
 
-    sources.map(source => {
+    sources.foreach(source => {
       val path = new Path(
 //        if (isLocalResources)
 //          this.getClass.getResource(getFilePathAsResource(fileNumber, source.getObjectName)).getPath
@@ -120,20 +120,20 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
           getFilePathAsResource(fileNumber, source.getObjectName)
       )
 
-      val fs = FileSystem.getLocalFileSystem
-      val filePathStats = new Path(path.toUri.getPath.concat("-stats.json"))
-      val statistics =
-        if (fs.exists(filePathStats)) {
-          readStatisticFromFile(filePathStats)
-        }
-        else {
-          val statistics = getTableTabStatistic(path)
-          writeStatisticToFile(statistics, filePathStats)
-          statistics
-        }
-
-      val statistic = getTableTabStatistic(path)
-      catalog.alterTableStatistics(source, statistics, false)
+//      val fs = FileSystem.getLocalFileSystem
+//      val filePathStats = new Path(path.toUri.getPath.concat("-stats.json"))
+//      val statistics =
+//        if (fs.exists(filePathStats)) {
+//          readStatisticFromFile(filePathStats)
+//        }
+//        else {
+//          val statistics = getTableTabStatistic(path)
+//          writeStatisticToFile(statistics, filePathStats)
+//          statistics
+//        }
+//
+//      val statistic = getTableTabStatistic(path)
+//      catalog.alterTableStatistics(source, statistics, false)
     })
   }
 

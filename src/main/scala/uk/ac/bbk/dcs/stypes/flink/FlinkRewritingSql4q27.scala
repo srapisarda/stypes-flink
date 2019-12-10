@@ -4,12 +4,11 @@ import java.util.UUID
 
 import org.apache.flink.table.api.{Table, TableEnvironment}
 
-//uk.ac.bbk.dcs.stypes.flink.FlinkRewritingSql4q24
-object FlinkRewritingSql4q24 extends BaseFlinkTableRewriting {
+object FlinkRewritingSql4q27 extends BaseFlinkTableRewriting {
   val DEFAULT_TTL_FILE_NUMBER = 3
 
   def run(fileNumber: Int, serial: String = UUID.randomUUID().toString): Unit = {
-    val jobName = "sql-q24"
+    val jobName = "sql-q27"
     val tableEnv: TableEnvironment = makeTableEnvironment(fileNumber, jobName )
     executeTableRewriting(fileNumber, serial, jobName, tableEnv, tableRewritingEvaluation)
   }
@@ -81,15 +80,16 @@ object FlinkRewritingSql4q24 extends BaseFlinkTableRewriting {
       .join(s).where("x6=s_x").select("x0, s_y as x7")
       .join(p27).where("x7=p27_y").select("x0 as x, p27_x as y")
     val p1 = p1_1.union(p1_2).union(p1_3).distinct()
+
     p1
   }
 
   def main(args: Array[String]): Unit = {
     val fileNumber = if (args.isEmpty) DEFAULT_TTL_FILE_NUMBER else args(0).toInt
     if ( args.length > 1 )
-      FlinkRewritingSql4q24.run(fileNumber, args(1))
+      FlinkRewritingSql4q27.run(fileNumber, args(1))
     else {
-      FlinkRewritingSql4q24.run(fileNumber)
+      FlinkRewritingSql4q27.run(fileNumber)
     }
   }
 
