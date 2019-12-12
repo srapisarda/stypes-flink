@@ -46,7 +46,38 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
 //    else
 //      pathToBenchmarkNDL_SQL
 
+  private val catalogStatistics: Map[(Int, ObjectPath), CatalogStatistics] = Map (
+    (1, pathS) -> CatalogStatistics(0,1,0,0),
+    (1, pathA) -> CatalogStatistics(59, 1, 232, 464),
+    (1, pathB) -> CatalogStatistics(48, 1, 183, 366),
+    (1, pathR) -> CatalogStatistics(61390, 1, 477853, 955706),
 
+    (2, pathS) -> CatalogStatistics(0,1,0,0),
+    (2, pathA) -> CatalogStatistics(22, 1, 107, 214),
+    (2, pathB) -> CatalogStatistics(31, 1, 150, 300),
+    (2, pathR) -> CatalogStatistics(64103, 1, 612911, 1225822),
+
+    (3, pathS) -> CatalogStatistics(0,1,0,0),
+    (3, pathA) -> CatalogStatistics(57, 1, 277, 554),
+    (3, pathB) -> CatalogStatistics(47, 1, 226, 452),
+    (3, pathR) -> CatalogStatistics(256699, 1, 2510481, 5020962),
+
+    (4, pathS) -> CatalogStatistics(0,1,0,0),
+    (4, pathA) -> CatalogStatistics(248, 1, 1353, 2706),
+    (4, pathB) -> CatalogStatistics(253, 1, 1383, 2766),
+    (4, pathR) -> CatalogStatistics(1026526, 1, 11178724, 22357448),
+
+    (5, pathS) -> CatalogStatistics(0,1,0,0),
+    (5, pathA) -> CatalogStatistics(336, 1, 1892, 3784),
+    (5, pathB) -> CatalogStatistics(357, 1, 2013, 4026),
+    (5, pathR) -> CatalogStatistics(2307054, 1, 25975560, 51951120),
+
+    (6, pathS) -> CatalogStatistics(0,1,0,0),
+    (6, pathA) -> CatalogStatistics(492, 1, 2807, 5614),
+    (6, pathB) -> CatalogStatistics(463, 1, 2654, 5308),
+    (6, pathR) -> CatalogStatistics(4101642, 1, 46940747, 93881494)
+
+  )
   import com.google.gson.{Gson, GsonBuilder}
 
   val objectMapper: ObjectMapper = new databind.ObjectMapper()
@@ -113,12 +144,22 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
     //    FileSystem.get()
 
     sources.foreach(source => {
-      val path = new Path(
+      val key = (fileNumber, source)
+      if (catalogStatistics.contains(key)) {
+        val msg = s"Adding statistics for table ${source.getObjectName} number $fileNumber "
+        log.info(msg)
+        println(msg)
+        catalog.alterTableStatistics(source, catalogStatistics(key), false)
+      }
+//      val path = new Path(
 //        if (isLocalResources)
 //          this.getClass.getResource(getFilePathAsResource(fileNumber, source.getObjectName)).getPath
 //        else
-          getFilePathAsResource(fileNumber, source.getObjectName)
-      )
+//          getFilePathAsResource(fileNumber, source.getObjectName)
+//      )
+
+
+//        val stats = env.readTextFile( path.toUri.getPath.concat("-stats.json"))
 
 //      val fs = FileSystem.getLocalFileSystem
 //      val filePathStats = new Path(path.toUri.getPath.concat("-stats.json"))
@@ -150,6 +191,7 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
   }
 
   private def getResultSinkPath(fileName: String, fileNumber: Int, jobName: String) = {
+
 
     val resourcePath =
 //      if (Configuration.getEnvironment == RewritingEnvironment.Local.toString)
