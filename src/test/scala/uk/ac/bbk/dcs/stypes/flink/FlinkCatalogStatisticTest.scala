@@ -51,22 +51,22 @@ class FlinkCatalogStatisticTest extends FunSpec with BaseFlinkTest with Matchers
 
     assertNotNull(catalog)
     catalog.createTable(pathS,
-      ConnectorCatalogTable.source(getExternalCatalogSourceTable(tableNameS, fileNumber), true),
+      ConnectorCatalogTable.source[Row](getExternalCatalogSourceTable(tableNameS, fileNumber), true),
       false)
     catalog.createTable(pathA,
-      ConnectorCatalogTable.source(getExternalCatalogSourceTable(tableNameA, fileNumber), true),
+      ConnectorCatalogTable.source[Row](getExternalCatalogSourceTable(tableNameA, fileNumber), true),
       false)
     catalog.createTable(pathR,
-      ConnectorCatalogTable.source(getExternalCatalogSourceTable(tableNameR, fileNumber), true),
+      ConnectorCatalogTable.source[Row](getExternalCatalogSourceTable(tableNameR, fileNumber), true),
       false)
 
     catalog.createTable(pathSink1,
-      ConnectorCatalogTable.sink(getExternalCatalogSinkTable(tableNameSink1, fileNumber), true),
+      ConnectorCatalogTable.sink[Row](getExternalCatalogSinkTable(tableNameSink1, fileNumber), true),
       false
     )
 
     catalog.createTable(pathSink2,
-      ConnectorCatalogTable.sink(getExternalCatalogSinkTable(tableNameSink2, fileNumber), true),
+      ConnectorCatalogTable.sink[Row](getExternalCatalogSinkTable(tableNameSink2, fileNumber), true),
       false
     )
 

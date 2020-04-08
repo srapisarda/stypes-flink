@@ -61,7 +61,7 @@ class FlinkQ27TableTest extends FunSpec with BaseFlinkTableTest {
       execute(4, 570000)
     }
 
-    it("should read and execute the 'q27.cq' query rewrote for 5.ffl file set {A, B, R, S}") {
+    ignore("should read and execute the 'q27.cq' query rewrote for 5.ffl file set {A, B, R, S}") {
       execute(5, 570000)
     }
 

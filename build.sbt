@@ -4,7 +4,7 @@ version := "1.0"
 
 scalaVersion := "2.11.8"
 
-val flinkVersion = "1.10-SNAPSHOT"
+val flinkVersion = "1.10.0"
 
 resolvers += Resolver.mavenLocal
 
@@ -13,7 +13,7 @@ libraryDependencies ++= Seq(
   ,"org.apache.flink" %% "flink-runtime-web" % flinkVersion
   ,"org.apache.flink" %% "flink-table-api-scala-bridge" % flinkVersion
   ,"org.apache.flink" %% "flink-table-planner-blink" % flinkVersion
-  ,"org.apache.flink" %% "flink-table-planner" % flinkVersion
+  ,"org.apache.flink" %% "flink-table-planner" %  flinkVersion
   ,"org.apache.flink"  % "flink-hadoop-fs" % flinkVersion
   ,"com.typesafe" % "config" % "1.4.0"
   ,"com.google.guava" % "guava" % "28.0-jre"

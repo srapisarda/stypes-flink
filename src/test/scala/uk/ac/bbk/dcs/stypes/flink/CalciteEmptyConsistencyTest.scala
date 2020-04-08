@@ -67,14 +67,14 @@ class CalciteEmptyConsistencyTest extends FunSpec with BaseFlinkTest with Matche
 
   describe("Flink SQL  Empty test") {
 
-    it("should assert 0 as row count for relation S") {
+    ignore("should assert 0 as row count for relation S") {
       val t: Table = tableEnv.scan(s"$tableNameS")
       val rowCount = tableEnv.toDataSet[Row](t).count()
       val expected = 0
       assert(rowCount == expected)
     }
 
-    it("should assert 0 as row count for relation S using sql") {
+    ignore("should assert 0 as row count for relation S using sql") {
       val t: Table = tableEnv.sqlQuery("select * from S")
       val rowCount = tableEnv.toDataSet[Row](t).count()
       val expected = 0
@@ -109,7 +109,7 @@ class CalciteEmptyConsistencyTest extends FunSpec with BaseFlinkTest with Matche
       assert(rowCount == expected)
     }
 
-    it("should assert 0 as row count for query R join R join A join S using sql") {
+    ignore("should assert 0 as row count for query R join R join A join S using sql") {
       //      addStatisticsToCatalog()
       val t: Table = tableEnv.sqlQuery("select r1.X, S.Y from R as r1 " +
         "inner join R as r2 on r1.Y=r2.X inner join A on r2.Y=A.X " +

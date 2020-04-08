@@ -15,7 +15,7 @@ import org.apache.flink.table.catalog.{Catalog, ConnectorCatalogTable, ObjectPat
 import org.apache.flink.table.plan.rules.dataSet.{DataSetJoinRule, DataSetUnionRule}
 import org.apache.flink.table.plan.rules.datastream.DataStreamRetractionRules
 import org.apache.flink.table.sinks.{CsvTableSink, TableSink}
-import org.apache.flink.table.sources.CsvTableSource
+import org.apache.flink.table.sources.{CsvTableSource, TableSource}
 import org.apache.flink.types.Row
 import uk.ac.bbk.dcs.stypes.flink.common.{CatalogStatistics, Configuration, RewritingEnvironment}
 
@@ -116,7 +116,7 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
     sources
       .foreach(path => {
         catalog.createTable(path,
-          ConnectorCatalogTable.source(getExternalCatalogSourceTable(path.getObjectName, fileNumber), false),
+          ConnectorCatalogTable.source[Row](getExternalCatalogSourceTable(path.getObjectName, fileNumber), true),
           false)
       })
 
@@ -128,7 +128,7 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
       .foreach(sinkPrefix => {
         val sinkName = s"${sinkPrefix}_$uuid"
         catalog.createTable(new ObjectPath(databaseName, sinkName),
-          ConnectorCatalogTable.sink(getExternalCatalogSinkTable(sinkName, fileNumber, jobName), true),
+          ConnectorCatalogTable.sink[Row](getExternalCatalogSinkTable(sinkName, fileNumber, jobName), true),
           false
         )
       })
@@ -209,7 +209,7 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
     csvTableSink.configure(fieldNames, fieldTypes)
   }
 
-  private def getExternalCatalogSourceTable(fileName: String, fileNumber: Int): CsvTableSource = {
+  private def getExternalCatalogSourceTable(fileName: String, fileNumber: Int): TableSource[Row] = {
     val filePath = getFilePathAsResource(fileNumber, fileName)
     val resourcePath = filePath // this.getClass.getResource(filePath).getPath
     val builder = CsvTableSource.builder()

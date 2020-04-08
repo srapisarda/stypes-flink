@@ -78,7 +78,7 @@ object FlinkRewritingSql02 extends BaseFlinkTableRewriting {
   }
 
   private def tableRewritingEvaluation(fileNumber: Int, jobName: String, tableEnv: TableEnvironment): Table = {
-    val a = tableEnv.sqlQuery("select X as a_x, X as a_y from A")
+    val a: Table = tableEnv.sqlQuery("select X as a_x, X as a_y from A")
     val b = tableEnv.sqlQuery("select X as b_x, X as b_y from B")
     val s = tableEnv.sqlQuery("select X as s_x, Y as s_y from S")
     val r = tableEnv.sqlQuery("select X as r_x, Y as r_y from R")
@@ -106,9 +106,9 @@ object FlinkRewritingSql02 extends BaseFlinkTableRewriting {
 object FlinkRewriting02 extends BaseFlinkRewriting {
   def main(args: Array[String]): Unit = {
     if (args.length > 1)
-      FlinkRewriting01.run(args(0).toInt, args(1))
+      FlinkRewriting02.run(args(0).toInt, args(1))
     else
-      FlinkRewriting01.run(args(0).toInt)
+      FlinkRewriting02.run(args(0).toInt)
   }
 
   def run(fileNumber: Int, serial: String = UUID.randomUUID().toString): Unit = {

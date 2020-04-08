@@ -93,7 +93,7 @@ trait BaseFlinkTableTest extends BaseFlinkTest {
     sources
       .foreach(path => {
         catalog.createTable(path,
-          ConnectorCatalogTable.source(getExternalCatalogSourceTable(path.getObjectName, fileNumber), false),
+          ConnectorCatalogTable.source[Row](getExternalCatalogSourceTable(path.getObjectName, fileNumber), false),
           false)
       })
 
@@ -105,7 +105,7 @@ trait BaseFlinkTableTest extends BaseFlinkTest {
       .foreach(sinkPrefix => {
         val sinkName = s"${sinkPrefix}_$uuid"
         catalog.createTable(new ObjectPath(databaseName, sinkName),
-          ConnectorCatalogTable.sink(getExternalCatalogSinkTable(sinkName, fileNumber, jobName), true),
+          ConnectorCatalogTable.sink[Row](getExternalCatalogSinkTable(sinkName, fileNumber, jobName), true),
           false
         )
       })
