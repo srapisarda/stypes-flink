@@ -30,16 +30,16 @@ import org.slf4j.{Logger, LoggerFactory}
 import uk.ac.bbk.dcs.stypes.flink.common.Configuration
 
 /**
-  * Created by:
-  * Salvatore Rapisarda
-  * Stanislav Kikot
-  *
-  */
+ * Created by:
+ * Salvatore Rapisarda
+ * Stanislav Kikot
+ *
+ */
 trait BaseFlinkRewriting {
 
   val log: Logger = LoggerFactory.getLogger(this.getClass)
   val env: ExecutionEnvironment = ExecutionEnvironment.getExecutionEnvironment
-//  val pathToBenchmarkNDL_SQL = "hdfs:///user/hduser/stypes/resources/benchmark/Lines"
+  //  val pathToBenchmarkNDL_SQL = "hdfs:///user/hduser/stypes/resources/benchmark/Lines"
   val pathToBenchmarkNDL_SQL: String =
     if (Configuration.getEnvironment == "hadoop")
       "hdfs:///user/hduser/stypes/resources/benchmark/Lines"
@@ -92,7 +92,7 @@ trait BaseFlinkRewriting {
     ds
   }
 
-  private def getFilePath(fileNumber: Int, name: String) : String =
+  private def getFilePath(fileNumber: Int, name: String): String =
     s"$pathToBenchmarkNDL_SQL/data/csv/$fileNumber.ttl-$name.csv"
 
   def getA(fileNumber: Int): DataSet[(String, String)] =
@@ -111,7 +111,7 @@ trait BaseFlinkRewriting {
 
   def getDataSourceS(fileNumber: Int): CsvTableSource = createDataSource(fileNumber, "S")
 
-  private def createDataSource(fileNumber: Int, name:String): CsvTableSource =
+  private def createDataSource(fileNumber: Int, name: String): CsvTableSource =
     CsvTableSource.builder()
       .path(getFilePath(fileNumber, name))
       .fieldDelimiter(",")
@@ -119,9 +119,14 @@ trait BaseFlinkRewriting {
       .field("Y", Types.STRING)
       .build()
 
-  def   execute(fileNumber: Int, serial: String, qName: String, f: Int => DataSet[(String, String)]): Unit = {
+  def execute(fileNumber: Int, serial: String, qName: String, f: Int => DataSet[(String, String)]): Unit = {
     val startTime = System.nanoTime()
     distinctSink(f.apply(fileNumber), fileNumber, serial, startTime, qName)
+  }
+
+  def execute2(fileNumber: Int, serial: String, qName: String, f: Int => DataSet[(String, String)]): Unit = {
+    val startTime = System.nanoTime()
+    sink(f.apply(fileNumber), fileNumber, serial, startTime, qName)
   }
 
   def executeAsTable(fileNumber: Int, serial: String, qName: String, f: Int => Table): Unit = {
@@ -129,7 +134,7 @@ trait BaseFlinkRewriting {
     distinctTableSink(f.apply(fileNumber), fileNumber, serial, startTime, qName)
   }
 
-  def distinctTableSink(p1: Table , fileNumber: Int, serial: String, startTime: Long, qName: String): Unit = {
+  def distinctTableSink(p1: Table, fileNumber: Int, serial: String, startTime: Long, qName: String): Unit = {
     val p1_distinct = p1.distinct()
     val postfix = s"ttl-$fileNumber-par-${env.getParallelism}-${new Date().getTime}"
     val resultPath = s"$pathToBenchmarkNDL_SQL/data/results/$qName/$serial/results-$postfix"
@@ -152,5 +157,11 @@ trait BaseFlinkRewriting {
     val count2: Long = p1_distinct.count
 
     log.info(s"p1_distinct count: $count, $count2")
+  }
+
+  def sink(p1: DataSet[(String, String)], fileNumber: Int, serial: String, startTime: Long, qName: String): Unit = {
+    val postfix = s"ttl-$fileNumber-par-${env.getParallelism}-${new Date().getTime}"
+    val resultPath = s"$pathToBenchmarkNDL_SQL/data/results/$qName/$serial/results-$postfix"
+    p1.writeAsCsv(resultPath)
   }
 }

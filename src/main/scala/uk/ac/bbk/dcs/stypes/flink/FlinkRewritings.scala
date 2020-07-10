@@ -154,7 +154,7 @@ object FlinkRewritingSql03 extends BaseFlinkTableRewriting {
       .join(a).where("r_y=a_x").select("r_x as x7, a_x as x8")
       .join(s).where("x8=s_x").select("x7, s_y as x11")
       .join(b).where("x11=b_x").select("x7, b_x")
-        .join(r).where("b_x=r_x").select("r_y as x, x7 as y")
+      .join(r).where("b_x=r_x").select("r_y as x, x7 as y")
 
     p1
   }
@@ -166,6 +166,73 @@ object FlinkRewritingSql03 extends BaseFlinkTableRewriting {
     else {
       FlinkRewritingSql03.run(fileNumber)
     }
+  }
+}
+
+//uk.ac.bbk.dcs.stypes.flink.FlinkRewritingEx
+object FlinkRewritingEx extends BaseFlinkRewriting {
+
+
+  def main(args: Array[String]): Unit = {
+    if (args.length > 1)
+      FlinkRewritingEx.run(args(0).toInt, args(1))
+    else
+      FlinkRewritingEx.run(args(0).toInt)
+  }
+
+  def run(fileNumber: Int, serial: String = UUID.randomUUID().toString): Unit = {
+    execute(fileNumber, serial, "EX", rewritingEvaluation)
+  }
+
+  def rewritingEvaluation(fileNumber: Int): DataSet[(String, String)] = {
+    val b: DataSet[(String, String)] = getB(fileNumber)
+    val r: DataSet[(String, String)] = getR(fileNumber)
+    val s: DataSet[(String, String)] = getS(fileNumber)
+
+
+    // p1(x12,x7) :- r(x7,x8), a(x8), s(x8,x11), b(x11), r(x11,x12).
+    val p1_0 = r.join(r).where(1).equalTo(0).map(p => (p._1._2, p._2._2))
+      .join(s).where(1).equalTo(0).map(p => (p._1._2, p._2._2))
+
+    val p1_1 = r.join(b).where(1).equalTo(0).map(p => (p._1._2, p._2._2))
+
+    val p1 = p1_0.union(p1_1)
+
+    p1
+  }
+}
+
+
+//uk.ac.bbk.dcs.stypes.flink.FlinkRewritingEx2
+object FlinkRewritingEx2 extends BaseFlinkRewriting {
+
+
+  def main(args: Array[String]): Unit = {
+    if (args.length > 1)
+      FlinkRewritingEx2.run(args(0).toInt, args(1))
+    else
+      FlinkRewritingEx2.run(args(0).toInt)
+  }
+
+  def run(fileNumber: Int, serial: String = UUID.randomUUID().toString): Unit = {
+    execute(fileNumber, serial, "EX", rewritingEvaluation)
+  }
+
+  def rewritingEvaluation(fileNumber: Int): DataSet[(String, String)] = {
+    val b: DataSet[(String, String)] = getB(fileNumber)
+    val r: DataSet[(String, String)] = getR(fileNumber)
+    val s: DataSet[(String, String)] = getS(fileNumber)
+
+
+    // p1(x12,x7) :- r(x7,x8), a(x8), s(x8,x11), b(x11), r(x11,x12).
+    val p1_0 = s.join(r).where(0).equalTo(1).map(p => (p._2._1, p._1._2))
+      .join(r).where(0).equalTo(1).map(p => (p._2._1, p._1._2))
+
+    val p1_1 = r.join(b).where(1).equalTo(0).map(p => (p._1._2, p._2._2))
+
+    val p1 = p1_0.union(p1_1)
+
+    p1
   }
 }
 

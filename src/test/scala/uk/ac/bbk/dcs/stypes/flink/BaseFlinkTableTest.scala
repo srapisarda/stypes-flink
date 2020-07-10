@@ -78,9 +78,12 @@ trait BaseFlinkTableTest extends BaseFlinkTest {
 
   def makeTableEnvironment(fileNumber: Int, jobName: String): TableEnvironment = {
     val tableEnv: TableEnvironment = TableEnvironment.create(settings)
-    tableEnv.getConfig // access high-level configuration
+   val configuration = tableEnv.getConfig // access high-level configuration
       .getConfiguration // set low-level key-value options
-      .setString("table.optimizer.join-reorder-enabled", "true")
+
+      configuration.setString("table.optimizer.join-reorder-enabled", "true")
+      configuration.setString("table.exec.mini-batch.allow-latency", "5 s")
+      configuration.setString("table.exec.mini-batch.size", "5000")
 
     val catalog: Catalog = tableEnv.getCatalog(tableEnv.getCurrentCatalog).orElse(null)
 
