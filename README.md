@@ -1,31 +1,42 @@
 # STypeS-Flink
 
-It is possible to evaluate [**STypeS NDL rewriting**](https://github.com/srapisarda/stypes) using Apache Flink. If, for example, we are taking into consideration the following Nonrecursive Datalog (NDL) script:
+It is possible to evaluate [**STypeS NDL rewriting**](https://github.com/srapisarda/stypes) using Apache Flink. 
+If, for example, we are taking into consideration the following Nonrecursive Datalog (NDL) script:
  ```
 p1(x,y) :− s(z,y), s(x,y).
 p1(x,y) :− s(x,y), r(y,z).
 ```
 
+and CSV data source files formatted as in [r.csv](https://github.com/srapisarda/stypes-flink/blob/master/src/test/resources/benchmark/Lines/data/csv/1.ttl-R.csv)
+
 the Apache Flink program can be something like below:
 ```scala
+import org.apache.flink.api.scala.{DataSet, _}
+
 object FlinkRewriting {
-  private def stringMapper: (String) => (String, String) = (p: String) => { 
-    val line = p.split(',')
-    (line.head, line.last)
-  }
-  // Apache Flink environment 
-  val env = ExecutionEnvironment.getExecutionEnvironment
-  // r and s relation definition from a CSV file resources stored in hadoop
-  val r =env.readTextFile("hdfs:///user/hduser/data/r.csv").map(stringMapper) 
-  val s = env.readTextFile("hdfs:///user/hduser/data/r.csv").map(stringMapper)
-  // (1) - p1(x,y) :− s(z,y), s(x,y).
-  val p1_1 = s.join(s).where(1).equalTo(1).map(term => (term. 2._1, term. 1._2)) 
-  // (2) - p1(x,y) :− s(x,y), r(y,z).
-  val p1_2 = s.join(r).where(1).equalTo(0).map(term => (term. 1._1, term. 2._1)) 
-  // Union on conjunctive query (1) V (2) 
-  val p1 = p1_1.union(p1_2) 
-  // this is the evaluation of a distinct count action
-  p1.distinct().count()
+    def main(args: Array[String]): Unit = {
+        // Apache Flink environment 
+        val env = ExecutionEnvironment.getExecutionEnvironment
+        val dataPath = "hdfs:///user/hduser/data"  
+        // r and s relation definition from a CSV file resources stored in hadoop
+        val r =env.readTextFile(s"$dataPath/r.csv").map(stringMapper) 
+        val s = env.readTextFile(s"$dataPath/s.csv").map(stringMapper)
+        // (1) - p1(x,y) :− s(z,y), s(x,y).
+        val p1_1 = s.join(s).where(1).equalTo(1).map(term => (term. 2._1, term. 1._2)) 
+        // (2) - p1(x,y) :− s(x,y), r(y,z).
+        val p1_2 = s.join(r).where(1).equalTo(0).map(term => (term. 1._1, term. 2._1)) 
+        // Union on conjunctive query (1) V (2) 
+        val p1 = p1_1.union(p1_2) 
+        
+        p1.writeAsCsv("$dataPath/results/p1-result.csv")
+        
+        env.execute("evaluating p1")
+    }
+    
+    private def stringMapper: (String) => (String, String) = (p: String) => { 
+        val line = p.split(',')
+        (line.head, line.last)
+    }
  }
 ```
 
