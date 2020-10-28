@@ -3,7 +3,7 @@ package uk.ac.bbk.dcs.stypes.flink
 import org.apache.calcite.tools.RuleSets
 import org.apache.flink.api.scala._
 import org.apache.flink.table.api._
-import org.apache.flink.table.api.scala.BatchTableEnvironment
+import org.apache.flink.table.api.bridge.scala.BatchTableEnvironment
 import org.apache.flink.table.calcite.{CalciteConfig, CalciteConfigBuilder}
 import org.apache.flink.table.catalog._
 import org.apache.flink.table.catalog.stats.CatalogTableStatistics

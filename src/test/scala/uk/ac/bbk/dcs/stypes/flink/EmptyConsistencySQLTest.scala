@@ -7,8 +7,8 @@ import org.apache.flink.api.java.io.DiscardingOutputFormat
 import org.apache.flink.api.scala.{DataSet, _}
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.optimizer.{DataStatistics, Optimizer}
-import org.apache.flink.table.api.scala.BatchTableEnvironment
-import org.apache.flink.table.api.{Table, TableConfig, TableEnvironment, java}
+import org.apache.flink.table.api.bridge.scala.BatchTableEnvironment
+import org.apache.flink.table.api.{Table, TableConfig}
 import org.apache.flink.table.planner.calcite.CalciteConfigBuilder
 import org.apache.flink.types.Row
 import org.scalatest.FunSpec
