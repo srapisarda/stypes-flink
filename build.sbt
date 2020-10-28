@@ -2,9 +2,9 @@ name := "stypes-flink"
 
 version := "1.0"
 
-scalaVersion := "2.11.8"
+scalaVersion := "2.12.10"
 
-val flinkVersion = "1.10.0"
+val flinkVersion = "1.11.2"
 
 resolvers += Resolver.mavenLocal
 

@@ -21,6 +21,7 @@ object FlinkRewritingReport2020 {
                 .join(s).where(1).equalTo(0).map(p => (p._1._1, p._2._2))
     //  operation for datalog: p1(x0,x3) :- r(x0,x3), b(x3) .
     val p1_1 = r.join(b).where(1).equalTo(0).map(p => (p._1._1, p._2._1))
+    r.map(p=> p._1)
     // p1 = P1_0 U P1_1
     val p1: DataSet[(String, String)] = p1_0.union(p1_1)
     // sink operation which white the p1 evaluation as file results.csv\item

@@ -3,7 +3,7 @@ package uk.ac.bbk.dcs.stypes.flink
 import java.util.UUID
 
 import org.apache.flink.table.api.Table
-import org.apache.flink.table.api.scala.BatchTableEnvironment
+import org.apache.flink.table.api.bridge.scala.BatchTableEnvironment
 import org.apache.flink.table.sources.CsvTableSource
 
 /**
