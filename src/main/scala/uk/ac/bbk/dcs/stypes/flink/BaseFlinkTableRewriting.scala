@@ -8,7 +8,7 @@ import org.apache.flink.api.common.typeinfo.{TypeInformation, Types}
 import org.apache.flink.calcite.shaded.com.fasterxml.jackson.databind
 import org.apache.flink.calcite.shaded.com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.flink.core.fs.{FileSystem, Path}
-import org.apache.flink.table.api.{EnvironmentSettings, Table, TableEnvironment}
+import org.apache.flink.table.api.{DataTypes, EnvironmentSettings, Table, TableEnvironment}
 import org.apache.flink.table.calcite.{CalciteConfig, CalciteConfigBuilder}
 import org.apache.flink.table.catalog.stats.CatalogTableStatistics
 import org.apache.flink.table.catalog.{Catalog, ConnectorCatalogTable, ObjectPath}
@@ -214,10 +214,10 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
     val resourcePath = filePath // this.getClass.getResource(filePath).getPath
     val builder = CsvTableSource.builder()
     builder.path(resourcePath)
-    builder.field("X", Types.STRING)
+    builder.field("X", DataTypes.STRING)
 
     if (!(fileName == tableNameA || fileName == tableNameB))
-      builder.field("Y", Types.STRING)
+      builder.field("Y", DataTypes.STRING)
 
     builder.build()
   }
