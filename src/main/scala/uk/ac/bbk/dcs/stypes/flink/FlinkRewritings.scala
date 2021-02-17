@@ -6,6 +6,8 @@ import org.apache.flink.api.scala.DataSet
 import org.apache.flink.table.api.{Table, TableEnvironment}
 import org.apache.flink.api.scala._
 
+import scala.util.Try
+
 //uk.ac.bbk.dcs.stypes.flink.FlinkRewritingSql01
 object FlinkRewritingSql01 extends BaseFlinkTableRewriting {
   val DEFAULT_TTL_FILE_NUMBER = 3
@@ -106,9 +108,9 @@ object FlinkRewritingSql02 extends BaseFlinkTableRewriting {
 object FlinkRewritingSql04 extends BaseFlinkTableRewriting {
   val DEFAULT_TTL_FILE_NUMBER = 3
 
-  def run(fileNumber: Int, serial: String = UUID.randomUUID().toString): Unit = {
+  def run(fileNumber: Int, serial: String = UUID.randomUUID().toString, enableOptimisation:Boolean = true): Unit = {
     val jobName = "sql-q04-ex"
-    val tableEnv: TableEnvironment = makeTableEnvironment(fileNumber, jobName)
+    val tableEnv: TableEnvironment = makeTableEnvironment(fileNumber, jobName, enableOptimisation)
     executeTableRewriting(fileNumber, serial, jobName, tableEnv, tableRewritingEvaluation)
   }
 
@@ -123,7 +125,9 @@ object FlinkRewritingSql04 extends BaseFlinkTableRewriting {
 
   def main(args: Array[String]): Unit = {
     val fileNumber = if (args.isEmpty) DEFAULT_TTL_FILE_NUMBER else args(0).toInt
-    if (args.length > 1)
+    if (args.length > 2) {
+      FlinkRewritingSql04.run(fileNumber, args(1), Try(args(2).toBoolean).getOrElse(false))
+    } else if (args.length > 1)
       FlinkRewritingSql04.run(fileNumber, args(1))
     else {
       FlinkRewritingSql04.run(fileNumber)
@@ -135,7 +139,7 @@ object FlinkRewritingSql04 extends BaseFlinkTableRewriting {
 object FlinkRewritingSqlQ22 extends BaseFlinkTableRewriting {
   val DEFAULT_TTL_FILE_NUMBER = 3
 
-  def run(fileNumber: Int, serial: String = UUID.randomUUID().toString): Unit = {
+  def run(fileNumber: Int, serial: String = UUID.randomUUID().toString, enableOptimisation: Boolean = true): Unit = {
     val jobName = "sql-q22-ex"
     val tableEnv: TableEnvironment = makeTableEnvironment(fileNumber, jobName)
     executeTableRewriting(fileNumber, serial, jobName, tableEnv, tableRewritingEvaluation)
@@ -149,35 +153,37 @@ object FlinkRewritingSqlQ22 extends BaseFlinkTableRewriting {
     // p12(x7,x4) :- r(x4,x7), b(x7).
 
     lazy val p1 = tableEnv.sqlQuery(
-        """|select distinct p3.X as x, p12.X as y from
-           |(
-           |select A.X, R.Y from A inner join R on A.X = R.X
-           |union
-           |select S.X, R2.Y from S
-           |inner join R as R1 on S.Y = R1.X
-           |inner join R as R2 on R1.Y = R2.X
-           |) as p3
-           |inner join R on p3.Y = R.X
-           |inner join
-           |(
-           |select S.Y as X, R1.X as Y from
-           |R as R1 inner join R as R2 on R1.Y = R2.X
-           |inner join S on R2.Y = S.X
-           |union
-           |select B.X as X, R.X as Y
-           |from R inner join B on R.Y = B.X
-           |) as p12
-           |on R.Y = p12.Y
-           |""".stripMargin)
+      """|select distinct p3.X as x, p12.X as y from
+         |(
+         |select A.X, R.Y from A inner join R on A.X = R.X
+         |union
+         |select S.X, R2.Y from S
+         |inner join R as R1 on S.Y = R1.X
+         |inner join R as R2 on R1.Y = R2.X
+         |) as p3
+         |inner join R on p3.Y = R.X
+         |inner join
+         |(
+         |select S.Y as X, R1.X as Y from
+         |R as R1 inner join R as R2 on R1.Y = R2.X
+         |inner join S on R2.Y = S.X
+         |union
+         |select B.X as X, R.X as Y
+         |from R inner join B on R.Y = B.X
+         |) as p12
+         |on R.Y = p12.Y
+         |""".stripMargin)
 
     p1
   }
 
   def main(args: Array[String]): Unit = {
     val fileNumber = if (args.isEmpty) DEFAULT_TTL_FILE_NUMBER else args(0).toInt
-    if (args.length > 1)
+    if (args.length > 2) {
+      FlinkRewritingSqlQ22.run(fileNumber, args(1), Try(args(2).toBoolean).getOrElse(false))
+    } else if (args.length > 1) {
       FlinkRewritingSqlQ22.run(fileNumber, args(1))
-    else {
+    } else {
       FlinkRewritingSqlQ22.run(fileNumber)
     }
   }
