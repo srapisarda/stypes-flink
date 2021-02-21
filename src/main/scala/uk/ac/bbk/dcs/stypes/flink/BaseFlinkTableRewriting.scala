@@ -30,6 +30,7 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
   private val tableNameA = "A"
   private val tableNameR = "R"
   private val tableNameB = "B"
+  private val tableNameT = "T"
   private val tableNameSink1Prefix = s"sink_1"
   private val tableNameSink2Prefix = s"sink_2"
   private val tableNameSinkCountPrefix = s"sink_count"
@@ -37,7 +38,8 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
   private val pathA = new ObjectPath(databaseName, tableNameA)
   private val pathR = new ObjectPath(databaseName, tableNameR)
   private val pathB = new ObjectPath(databaseName, tableNameB)
-  val sources: List[ObjectPath] = List(pathS, pathA, pathB, pathR)
+  private val pathT = new ObjectPath(databaseName, tableNameT)
+  val sources: List[ObjectPath] = List(pathS, pathA, pathB, pathR, pathT)
   val sinkPrefixes: List[String] = List(tableNameSink1Prefix, tableNameSink2Prefix, tableNameSinkCountPrefix)
   private val isLocalResources = Configuration.getEnvironment == RewritingEnvironment.Local.toString.toLowerCase()
   private val pathToBenchmarkTableNDL_SQL = Configuration.getDataPath
@@ -46,37 +48,42 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
   //    else
   //      pathToBenchmarkNDL_SQL
 
-  private val catalogStatistics: Map[(Int, ObjectPath), CatalogStatistics] = Map(
+  private val defaultCatalogStatistics: Map[(Int, ObjectPath), CatalogStatistics] = Map(
     (1, pathS) -> CatalogStatistics(0, 1, 0, 0),
     (1, pathA) -> CatalogStatistics(59, 1, 232, 464),
     (1, pathB) -> CatalogStatistics(48, 1, 183, 366),
     (1, pathR) -> CatalogStatistics(61390, 1, 477853, 955706),
+    (1, pathT) -> CatalogStatistics(1, 1, 3, 3),
 
     (2, pathS) -> CatalogStatistics(0, 1, 0, 0),
     (2, pathA) -> CatalogStatistics(22, 1, 107, 214),
     (2, pathB) -> CatalogStatistics(31, 1, 150, 300),
     (2, pathR) -> CatalogStatistics(64103, 1, 612911, 1225822),
+    (2, pathT) -> CatalogStatistics(1, 1, 3, 3),
 
     (3, pathS) -> CatalogStatistics(0, 1, 0, 0),
     (3, pathA) -> CatalogStatistics(57, 1, 277, 554),
     (3, pathB) -> CatalogStatistics(47, 1, 226, 452),
     (3, pathR) -> CatalogStatistics(256699, 1, 2510481, 5020962),
+    (3, pathT) -> CatalogStatistics(1, 1, 3, 3),
 
     (4, pathS) -> CatalogStatistics(0, 1, 0, 0),
     (4, pathA) -> CatalogStatistics(248, 1, 1353, 2706),
     (4, pathB) -> CatalogStatistics(253, 1, 1383, 2766),
     (4, pathR) -> CatalogStatistics(1026526, 1, 11178724, 22357448),
+    (4, pathT) -> CatalogStatistics(1, 1, 3, 3),
 
     (5, pathS) -> CatalogStatistics(0, 1, 0, 0),
     (5, pathA) -> CatalogStatistics(336, 1, 1892, 3784),
     (5, pathB) -> CatalogStatistics(357, 1, 2013, 4026),
     (5, pathR) -> CatalogStatistics(2307054, 1, 25975560, 51951120),
+    (5, pathT) -> CatalogStatistics(1, 1, 3, 3),
 
     (6, pathS) -> CatalogStatistics(0, 1, 0, 0),
     (6, pathA) -> CatalogStatistics(492, 1, 2807, 5614),
     (6, pathB) -> CatalogStatistics(463, 1, 2654, 5308),
-    (6, pathR) -> CatalogStatistics(4101642, 1, 46940747, 93881494)
-
+    (6, pathR) -> CatalogStatistics(4101642, 1, 46940747, 93881494),
+    (6, pathT) -> CatalogStatistics(1, 1, 3, 3)
   )
 
   import com.google.gson.{Gson, GsonBuilder}
@@ -102,11 +109,12 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
 
   }
 
-  def makeTableEnvironment(fileNumber: Int, jobName: String, enableOptimisation: Boolean = true): TableEnvironment = {
+  def makeTableEnvironment(fileNumber: Int, jobName: String, optimisationEnabled: Boolean = true,
+                           statistics: Map[(Int, ObjectPath), CatalogStatistics] = defaultCatalogStatistics): TableEnvironment = {
     val tableEnv: TableEnvironment = TableEnvironment.create(settings)
     tableEnv.getConfig // access high-level configuration
       .getConfiguration // set low-level key-value options
-      .setString("table.optimizer.join-reorder-enabled", if (enableOptimisation) "true" else "false")
+      .setString("table.optimizer.join-reorder-enabled", if (optimisationEnabled) "true" else "false")
 
     val catalog: Catalog = tableEnv.getCatalog(tableEnv.getCurrentCatalog).orElse(null)
 
@@ -134,8 +142,8 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
         )
       })
 
-    if (enableOptimisation) {
-      addStatisticToCatalog(fileNumber, catalog)
+    if (optimisationEnabled) {
+      addStatisticToCatalog(fileNumber, catalog, statistics)
     }
     changeCalciteConfig(tableEnv)
     tableEnv
@@ -144,7 +152,7 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
   def getSinkTableName(sinkTableNamePrefix: String, catalog: Catalog): String =
     catalog.listTables(databaseName).asScala.find(_.startsWith(sinkTableNamePrefix)).last
 
-  def addStatisticToCatalog(fileNumber: Int, catalog: Catalog): Unit = {
+  def addStatisticToCatalog(fileNumber: Int, catalog: Catalog, catalogStatistics: Map[(Int, ObjectPath), CatalogStatistics]): Unit = {
     //    FileSystem.get()
 
     sources.foreach(source => {

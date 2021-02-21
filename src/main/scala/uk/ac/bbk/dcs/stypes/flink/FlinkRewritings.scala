@@ -135,6 +135,39 @@ object FlinkRewritingSql04 extends BaseFlinkTableRewriting {
   }
 }
 
+
+//uk.ac.bbk.dcs.stypes.flink.FlinkRewritingSql05
+object FlinkRewritingSql05 extends BaseFlinkTableRewriting {
+  val DEFAULT_TTL_FILE_NUMBER = 3
+
+  def run(fileNumber: Int, serial: String = UUID.randomUUID().toString, enableOptimisation:Boolean = true): Unit = {
+    val jobName = "sql-q05-ex"
+    val tableEnv: TableEnvironment = makeTableEnvironment(fileNumber, jobName, enableOptimisation)
+    executeTableRewriting(fileNumber, serial, jobName, tableEnv, tableRewritingEvaluation)
+  }
+
+  private def tableRewritingEvaluation(fileNumber: Int, jobName: String, tableEnv: TableEnvironment): Table = {
+    // p1(x11,x7) :- r(x7,x8), a(x8), s(x8,x11), b(x11).
+    val p1 = tableEnv.sqlQuery("select R.X as x, B.X as y from R " +
+      "inner join A on R.Y = A.X " +
+      "inner join T on A.X = T.X " +
+      "inner join B on T.Y = B.X")
+    p1
+  }
+
+  def main(args: Array[String]): Unit = {
+    val fileNumber = if (args.isEmpty) DEFAULT_TTL_FILE_NUMBER else args(0).toInt
+    if (args.length > 2) {
+      FlinkRewritingSql05.run(fileNumber, args(1), Try(args(2).toBoolean).getOrElse(false))
+    } else if (args.length > 1)
+      FlinkRewritingSql05.run(fileNumber, args(1))
+    else {
+      FlinkRewritingSql05.run(fileNumber)
+    }
+  }
+}
+
+
 //uk.ac.bbk.dcs.stypes.flink.FlinkRewritingSqlQ22
 object FlinkRewritingSqlQ22 extends BaseFlinkTableRewriting {
   val DEFAULT_TTL_FILE_NUMBER = 3
