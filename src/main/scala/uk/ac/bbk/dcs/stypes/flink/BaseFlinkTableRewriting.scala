@@ -83,7 +83,25 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
     (6, pathA) -> CatalogStatistics(492, 1, 2807, 5614),
     (6, pathB) -> CatalogStatistics(463, 1, 2654, 5308),
     (6, pathR) -> CatalogStatistics(4101642, 1, 46940747, 93881494),
-    (6, pathT) -> CatalogStatistics(1, 1, 3, 3)
+    (6, pathT) -> CatalogStatistics(1, 1, 3, 3),
+
+    (7, pathS) -> CatalogStatistics(0, 1, 0, 0),
+    (7, pathA) -> CatalogStatistics(600, 1, 3472, 6944),
+    (7, pathB) -> CatalogStatistics(565, 1, 2654, 5308),
+    (7, pathR) -> CatalogStatistics(6410095, 1, 46940747, 93881494),
+    (7, pathT) -> CatalogStatistics(1, 1, 3, 3),
+
+    (8, pathS) -> CatalogStatistics(0, 1, 0, 0),
+    (8, pathA) -> CatalogStatistics(492, 1, 2807, 5614),
+    (8, pathB) -> CatalogStatistics(463, 1, 2654, 5308),
+    (8, pathR) -> CatalogStatistics(4101642, 1, 46940747, 93881494),
+    (8, pathT) -> CatalogStatistics(1, 1, 3, 3),
+
+    (9, pathS) -> CatalogStatistics(0, 1, 0, 0),
+    (9, pathA) -> CatalogStatistics(492, 1, 2807, 5614),
+    (9, pathB) -> CatalogStatistics(463, 1, 2654, 5308),
+    (9, pathR) -> CatalogStatistics(4101642, 1, 46940747, 93881494),
+    (9, pathT) -> CatalogStatistics(1, 1, 3, 3)
   )
 
   import com.google.gson.{Gson, GsonBuilder}
