@@ -271,31 +271,29 @@ object FlinkRewritingSqlQ22With extends BaseFlinkTableRewriting {
     // p12(x7,x4) :- r(x4,x7), b(x7).
 
     lazy val p1 = tableEnv.sqlQuery(
-      """with p3 as (
-        |    select A.X, R.Y
-        |    from A
-        |             inner join R on A.X = R.X
-        |    union
-        |    select S.X, R2.Y
-        |    from S
-        |             inner join R as R1 on S.Y = R1.X
-        |             inner join R as R2 on R1.Y = R2.X
-        |),
-        |     p12 as (
-        |         select S.Y as X, R1.X as Y
-        |         from R as R1
-        |                  inner join R as R2 on R1.Y = R2.X
-        |                  inner join S on R2.Y = S.X
-        |         union
-        |         select B.X as X, R.X as Y
-        |         from R
-        |                  inner join B on R.Y = B.X
-        |     )
-        |select distinct p3.X as x, p12.X as y
-        |from p3
-        |         inner join R on p3.Y = R.X
-        |         inner join p12
-        |                    on R.Y = p12.Y""".stripMargin)
+      """WITH p12 AS (SELECT S_2.Y AS X0, R_0.X AS X1
+        |             FROM R AS R_0
+        |                      INNER JOIN R AS R_1 ON R_0.Y = R_1.X
+        |                      INNER JOIN S AS S_2 ON R_1.Y = S_2.X
+        |             UNION
+        |             (SELECT R_0.Y AS X0, R_0.X
+        |              AS X1
+        |              FROM R AS R_0
+        |                       INNER JOIN B AS B_1 ON R_0.Y = B_1.X)),
+        |     p3 AS (SELECT A_0.X AS X0, R_1.Y AS X1
+        |            FROM A AS A_0
+        |                     INNER JOIN R AS R_1 ON A_0.X = R_1.X
+        |            UNION
+        |            (SELECT S_0.X AS X0, R_2.Y AS X1
+        |             FROM S AS S_0
+        |                      INNER JOIN R AS R_1 ON S_0.Y = R_1.X
+        |                      INNER JOIN R AS R_2 ON R_1.Y = R_2.X)),
+        |     p1 AS (SELECT p3_0.X0 AS X0, p12_2.X0 AS X1
+        |            FROM p3 AS p3_0
+        |                     INNER JOIN R AS R_1 ON p3_0.X1 = R_1.X
+        |                     INNER JOIN p12 AS p12_2 ON R_1.Y = p12_2.X1)
+        |SELECT DISTINCT p1.X0 as x, p1.X1 as y
+        |FROM p1""".stripMargin)
 
     p1
   }
