@@ -10,7 +10,7 @@ object FlinkRewritingSqlQ15With extends BaseFlinkTableRewriting {
     val DEFAULT_TTL_FILE_NUMBER = 3
 
     def run(fileNumber: Int, serial: String = UUID.randomUUID().toString, enableOptimisation: Boolean = true): Unit = {
-      val jobName = "sql-q22-with-ex"
+      val jobName = "sql-q15-with-ex"
       val tableEnv: TableEnvironment = makeTableEnvironment(fileNumber, jobName)
       executeTableRewriting(fileNumber, serial, jobName, tableEnv, tableRewritingEvaluation)
     }
