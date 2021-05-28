@@ -80,7 +80,7 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
     (5, pathT) -> CatalogStatistics(1, 1, 3, 3),
 
     (6, pathS) -> CatalogStatistics(0, 1, 0, 0),
-    (6, pathA) -> CatalogStatistics(492, 1, 2807, 5614),
+    (6, pathA) -> CatalogStatistics(492, 1, 492, 5614),
     (6, pathB) -> CatalogStatistics(463, 1, 2654, 5308),
     (6, pathR) -> CatalogStatistics(4101642, 1, 46940747, 93881494),
     (6, pathT) -> CatalogStatistics(1, 1, 3, 3),
