@@ -1,11 +1,19 @@
 package uk.ac.bbk.dcs.stypes.flink
 
-import java.util.UUID
+import fr.lirmm.graphik.graal.api.core.{Atom, Predicate, Term}
+import fr.lirmm.graphik.graal.api.factory.TermFactory
+import fr.lirmm.graphik.graal.core.DefaultAtom
+import fr.lirmm.graphik.graal.core.term.DefaultTermFactory
 
+import java.util.UUID
 import org.apache.flink.api.scala.DataSet
 import org.apache.flink.table.api.{Table, TableEnvironment}
 import org.apache.flink.api.scala._
+import uk.ac.bbk.dcs.stypes.ReWriter
+import uk.ac.bbk.dcs.stypes.flink.FlinkRewritingSqlQ22With.{DEFAULT_TTL_FILE_NUMBER, executeTableRewriting, makeTableEnvironment, tableRewritingEvaluation}
+import uk.ac.bbk.dcs.stypes.sql.{EDBCatalog, SqlUtils}
 
+import scala.collection.JavaConverters._
 import scala.util.Try
 
 //uk.ac.bbk.dcs.stypes.flink.FlinkRewritingSql01
@@ -250,6 +258,58 @@ object FlinkRewritingSqlQ22 extends BaseFlinkTableRewriting {
     } else {
       FlinkRewritingSqlQ22.run(fileNumber)
     }
+  }
+}
+
+// uk.ac.bbk.dcs.stypes.flink.FlinkRewritingSqlQ22WithNDL
+object FlinkRewritingSqlQ22WithNDL extends  BaseFlinkRewriting {
+  val DEFAULT_TTL_FILE_NUMBER = 3
+
+  def run(fileNumber: Int, serial: String = UUID.randomUUID().toString, enableOptimisation: Boolean = true): Unit = {
+    val jobName = "sql-q22-with-ex-ndl"
+    val tableEnv: TableEnvironment = makeTableEnvironment(fileNumber, jobName)
+    executeTableRewriting(fileNumber, serial, jobName, tableEnv, tableRewritingEvaluation)
+  }
+
+  private def tableRewritingEvaluation(fileNumber: Int, jobName: String, tableEnv: TableEnvironment): Table = {
+
+    val ndlString = """p1(x0,x7) :- p3(x0,x3), R(x3,x4), p12(x7,x4).
+                |    p3(x0,x3) :-  A(x0), R(x0,x3).
+                |    p3(x0,x3) :- S(x0,x1), R(x1,x2), R(x2,x3).
+                |    p12(x7,x4) :-  R(x4,x5), R(x5,x6), S(x6,x7).
+                |    p12(x7,x4) :- R(x4,x7), B(x7).""".stripMargin
+
+    val ndl = ReWriter.getDatalogRewritingFromString(ndlString)
+    val sql = SqlUtils.ndl2sql(ndl, new Predicate("p1", 2), getEDBCatalog, useWith = true)
+
+    lazy val p1 = tableEnv.sqlQuery(sql.toString)
+
+    p1
+  }
+
+  def main(args: Array[String]): Unit = {
+    val fileNumber = if (args.isEmpty) DEFAULT_TTL_FILE_NUMBER else args(0).toInt
+    if (args.length > 2) {
+      FlinkRewritingSqlQ22WithNDL.run(fileNumber, args(1), Try(args(2).toBoolean).getOrElse(false))
+    } else if (args.length > 1) {
+      FlinkRewritingSqlQ22WithNDL.run(fileNumber, args(1))
+    } else {
+      FlinkRewritingSqlQ22WithNDL.run(fileNumber)
+    }
+  }
+
+  private def getEDBCatalog: EDBCatalog = {
+    val tf: TermFactory = DefaultTermFactory.instance
+
+    val x: Term = tf.createVariable("X")
+    val y: Term = tf.createVariable("Y")
+
+    val r: Atom = new DefaultAtom(new Predicate("R", 2), List(x, y).asJava)
+    val s: Atom = new DefaultAtom(new Predicate("S", 2), List(x, y).asJava)
+    val a: Atom = new DefaultAtom(new Predicate("A", 1), List(x).asJava)
+    val b: Atom = new DefaultAtom(new Predicate("B", 1), List(x).asJava)
+
+    EDBCatalog(Set(a, b, r, s))
   }
 }
 
