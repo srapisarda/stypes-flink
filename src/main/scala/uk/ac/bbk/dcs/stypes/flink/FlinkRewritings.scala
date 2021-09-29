@@ -127,7 +127,7 @@ object FlinkRewritingSql04 extends BaseFlinkTableRewriting {
     val p1 = tableEnv.sqlQuery("select R.X as x, B.X as y from R " +
       "inner join A on R.Y = A.X " +
       "inner join S on A.X = S.X " +
-      "inner join B on S.Y = B.X")
+      "inner join B on S.Y = B.X")  
     p1
   }
 
