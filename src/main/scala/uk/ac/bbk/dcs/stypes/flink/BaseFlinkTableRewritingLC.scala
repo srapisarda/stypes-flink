@@ -295,7 +295,7 @@ trait BaseFlinkTableRewritingLC extends BaseFlinkRewriting {
   }
 
   def getFilePathAsResource(fileNumber: Int, name: String): String =
-    s"$pathToBenchmarkTableNDL_SQL/data/csv/$fileNumber.ttl-$name.csv"
+    s"$pathToBenchmarkTableNDL_SQL/data/csv/$fileNumber.ttl-${name.toUpperCase}.csv"
 
   def getFilePathFolderAsResource: String =
     s"$pathToBenchmarkTableNDL_SQL/data/csv/"
