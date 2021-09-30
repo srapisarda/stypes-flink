@@ -5,6 +5,7 @@ import org.apache.flink.api.common.typeinfo.{TypeInformation, Types}
 import org.apache.flink.calcite.shaded.com.fasterxml.jackson.databind
 import org.apache.flink.calcite.shaded.com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.flink.core.fs.{FileSystem, Path}
+import org.apache.flink.table.api.Expressions.$
 import org.apache.flink.table.api.{DataTypes, EnvironmentSettings, Table, TableEnvironment}
 import org.apache.flink.table.calcite.{CalciteConfig, CalciteConfigBuilder}
 import org.apache.flink.table.catalog.stats.CatalogTableStatistics
@@ -113,15 +114,15 @@ trait BaseFlinkTableRewritingLC extends BaseFlinkRewriting {
     val p1 = tableRewritingEvaluation.apply(fileNumber, jobName, tableEnv)
     val catalog = tableEnv.getCatalog(catalogName)
 
-    println(tableEnv.explain(p1))
+    //println(tableEnv.explain(p1))
 
     if (catalog.isPresent) {
-      p1.insertInto(getSinkTableName(tableNameSink1Prefix, catalog.get()))
-      val res = p1.select("y.count")
-      res.insertInto(getSinkTableName(tableNameSinkCountPrefix, catalog.get()))
-    }
-    tableEnv.execute(s"$jobName as ")
+      p1.executeInsert(getSinkTableName(tableNameSink1Prefix, catalog.get()))
 
+      val res = p1.select($("y").count)
+      res.executeInsert(getSinkTableName(tableNameSinkCountPrefix, catalog.get()))
+    }
+    val resExe = tableEnv.execute(s"$jobName")
   }
 
   def makeTableEnvironment(fileNumber: Int, jobName: String, optimisationEnabled: Boolean = true,

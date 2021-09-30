@@ -371,7 +371,7 @@ object FlinkRewritingSqlQ22With extends BaseFlinkTableRewriting {
   }
 }
 
-//uk.ac.bbk.dcs.stypes.flink.FlinkRewritingSqlQ22With
+//uk.ac.bbk.dcs.stypes.flink.FlinkRewritingSqlQ22With_NO_P3
 object FlinkRewritingSqlQ22With_NO_P3 extends BaseFlinkTableRewriting {
   val DEFAULT_TTL_FILE_NUMBER = 3
 
@@ -382,16 +382,34 @@ object FlinkRewritingSqlQ22With_NO_P3 extends BaseFlinkTableRewriting {
   }
 
   private def tableRewritingEvaluation(fileNumber: Int, jobName: String, tableEnv: TableEnvironment): Table = {
-    // p1(x0,x7) :- p3(x0,x3), r(x3,x4), p12(x7,x4).
-    // p3(x0,x3) :-  a(x0), r(x0,x3).
-    // p3(x0,x3) :- s(x0,x1), r(x1,x2), r(x2,x3).
-    // p12(x7,x4) :-  r(x4,x5), r(x5,x6), s(x6,x7).
-    // p12(x7,x4) :- r(x4,x7), b(x7).
+//      p1(x0,x7) :- a(x0), r(x0,x3), r(x3,x4), p12(x7,x4).
+//      p1(x0,x7) :- s(x0,x1), r(x1,x2), r(x2,x3), r(x3,x4), p12(x7,x4).
+//      p12(x7,x4) :- r(x4,x5), r(x5,x6), s(x6,x7).
+//      p12(x7,x4) :- r(x4,x7), b(x7).
 
     lazy val p1 = tableEnv.sqlQuery(
-      """WITH p12 AS (SELECT S_2.y AS X0, R_0.x AS X1 FROM R AS R_0 INNER JOIN R AS R_1 ON R_0.y = R_1.x INNER JOIN S AS S_2 ON R_1.y = S_2.x UNION (SELECT R_0.y AS X0, R_0.x AS X1 FROM R AS R_0 INNER JOIN B AS B_1 ON R_0.y = B_1.x)), p1 AS (SELECT A_0.x AS X0, p12_3.X0 AS X1 FROM
-        |    A AS A_0 INNER JOIN R AS R_1 ON A_0.x = R_1.x INNER JOIN R AS R_2 ON R_1.y = R_2.x INNER JOIN p12 AS p12_3 ON R_2.y = p12_3.X1 UNION (SELECT S_0.x AS X0, p12_4.X0 AS X1 FROM S AS S_0 INNER JOIN R AS R_1 ON S_0.y = R_1.x INNER JOIN R AS R_2 ON R_1.y = R_2.x INNER JOIN R A
-        |  S R_3 ON R_2.y = R_3.x INNER JOIN p12 AS p12_4 ON R_3.y = p12_4.X1)) SELECT p1.X0 AS x, p1.X1 AS y FROM p1""".stripMargin)
+      """WITH p12 AS (SELECT S_2.Y AS X0, R_0.X AS X1
+        |             FROM R AS R_0
+        |                      INNER JOIN R AS R_1 ON R_0.Y = R_1.X
+        |                      INNER JOIN S AS S_2 ON R_1.Y = S_2.X
+        |             UNION
+        |             (SELECT R_0.Y AS X0, R_0.X AS X1
+        |              FROM R AS R_0
+        |                       INNER JOIN B AS B_1 ON R_0.Y = B_1.X)),
+        |     p1 AS (SELECT A_0.X AS X0, p12_3.X0 AS X1
+        |            FROM A AS A_0
+        |                     INNER JOIN R AS R_1 ON A_0.X = R_1.X
+        |                     INNER JOIN R AS R_2 ON R_1.Y = R_2.X
+        |                     INNER JOIN p12 AS p12_3 ON R_2.Y = p12_3.X1
+        |            UNION
+        |            (SELECT S_0.X AS X0, p12_4.X0 AS X1
+        |             FROM S AS S_0
+        |                      INNER JOIN R AS R_1 ON S_0.Y = R_1.X
+        |                      INNER JOIN R AS R_2 ON R_1.Y = R_2.X
+        |                      INNER JOIN R AS R_3 ON R_2.Y = R_3.X
+        |                      INNER JOIN p12 AS p12_4 ON R_3.Y = p12_4.X1))
+        |SELECT p1.X0 AS x, p1.X1 AS y
+        |FROM p1""".stripMargin)
 
     p1
   }
@@ -404,6 +422,62 @@ object FlinkRewritingSqlQ22With_NO_P3 extends BaseFlinkTableRewriting {
       FlinkRewritingSqlQ22With_NO_P3.run(fileNumber, args(1))
     } else {
       FlinkRewritingSqlQ22With_NO_P3.run(fileNumber)
+    }
+  }
+}
+
+
+//uk.ac.bbk.dcs.stypes.flink.FlinkRewritingSqlQ22With_NO_P3_LC
+object FlinkRewritingSqlQ22With_NO_P3_LC extends BaseFlinkTableRewritingLC {
+  val DEFAULT_TTL_FILE_NUMBER = 3
+
+  def run(fileNumber: Int, serial: String = UUID.randomUUID().toString, enableOptimisation: Boolean = true): Unit = {
+    val jobName = "sql-q22-with-ex-no-p3-cl"
+    val tableEnv: TableEnvironment = makeTableEnvironment(fileNumber, jobName)
+    executeTableRewriting(fileNumber, serial, jobName, tableEnv, tableRewritingEvaluation)
+  }
+
+  private def tableRewritingEvaluation(fileNumber: Int, jobName: String, tableEnv: TableEnvironment): Table = {
+    //      p1(x0,x7) :- a(x0), r(x0,x3), r(x3,x4), p12(x7,x4).
+    //      p1(x0,x7) :- s(x0,x1), r(x1,x2), r(x2,x3), r(x3,x4), p12(x7,x4).
+    //      p12(x7,x4) :- r(x4,x5), r(x5,x6), s(x6,x7).
+    //      p12(x7,x4) :- r(x4,x7), b(x7).
+
+    lazy val p1 = tableEnv.sqlQuery(
+      """WITH p12 AS (SELECT s_2.y AS X0, r_0.x AS X1
+        |             FROM r AS r_0
+        |                      INNER JOIN r AS r_1 ON r_0.y = r_1.x
+        |                      INNER JOIN s AS s_2 ON r_1.y = s_2.x
+        |             UNION
+        |             (SELECT r_0.y AS X0, r_0.x AS X1
+        |              FROM r AS r_0
+        |                       INNER JOIN b AS b_1 ON r_0.y = b_1.x)),
+        |     p1 AS (SELECT a_0.x AS X0, p12_3.X0 AS X1
+        |            FROM a AS a_0
+        |                     INNER JOIN r AS r_1 ON a_0.x = r_1.x
+        |                     INNER JOIN r AS r_2 ON r_1.y = r_2.x
+        |                     INNER JOIN p12 AS p12_3 ON r_2.y = p12_3.X1
+        |            UNION
+        |            (SELECT s_0.x AS X0, p12_4.X0 AS X1
+        |             FROM s AS s_0
+        |                      INNER JOIN r AS r_1 ON s_0.y = r_1.x
+        |                      INNER JOIN r AS r_2 ON r_1.y = r_2.x
+        |                      INNER JOIN r AS r_3 ON r_2.y = r_3.x
+        |                      INNER JOIN p12 AS p12_4 ON r_3.y = p12_4.X1))
+        |SELECT p1.X0 AS x, p1.X1 AS y
+        |FROM p1""".stripMargin)
+
+    p1
+  }
+
+  def main(args: Array[String]): Unit = {
+    val fileNumber = if (args.isEmpty) DEFAULT_TTL_FILE_NUMBER else args(0).toInt
+    if (args.length > 2) {
+      FlinkRewritingSqlQ22With_NO_P3_LC.run(fileNumber, args(1), Try(args(2).toBoolean).getOrElse(false))
+    } else if (args.length > 1) {
+      FlinkRewritingSqlQ22With_NO_P3_LC.run(fileNumber, args(1))
+    } else {
+      FlinkRewritingSqlQ22With_NO_P3_LC.run(fileNumber)
     }
   }
 }
