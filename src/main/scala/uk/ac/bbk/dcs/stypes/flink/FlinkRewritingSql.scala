@@ -18,7 +18,7 @@ object FlinkRewritingSql extends BaseFlinkTableRewritingLC {
     }
 
     val jobName = s"sql-$serial"
-    val tableEnv: TableEnvironment = makeTableEnvironment(fileNumber, jobName, enableOptimisation)
+    val tableEnv: TableEnvironment = makeTableEnvironment(fileNumber, jobName)
     executeTableRewriting(fileNumber, serial, jobName, tableEnv, tableRewritingEvaluation)
   }
 
