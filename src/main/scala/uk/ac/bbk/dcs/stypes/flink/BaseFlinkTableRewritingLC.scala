@@ -1,5 +1,6 @@
 package uk.ac.bbk.dcs.stypes.flink
 
+import org.apache.calcite.rel.rules.{JoinAssociateRule, JoinCommuteRule}
 import org.apache.calcite.tools.RuleSets
 import org.apache.flink.api.common.typeinfo.{TypeInformation, Types}
 import org.apache.flink.calcite.shaded.com.fasterxml.jackson.databind
@@ -214,8 +215,10 @@ trait BaseFlinkTableRewritingLC extends BaseFlinkRewriting {
         DataSetJoinRule.INSTANCE,
         DataSetUnionRule.INSTANCE,
         DataSetScanRule.INSTANCE,
-        DataStreamRetractionRules.ACCMODE_INSTANCE
-//        FlinkFilterJoinRule.FILTER_ON_JOIN,
+        DataStreamRetractionRules.ACCMODE_INSTANCE,
+        FlinkFilterJoinRule.FILTER_ON_JOIN,
+        JoinCommuteRule.INSTANCE,
+        JoinAssociateRule.INSTANCE
       ))
       .build()
 
