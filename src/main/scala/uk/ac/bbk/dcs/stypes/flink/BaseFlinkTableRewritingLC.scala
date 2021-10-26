@@ -224,7 +224,7 @@ trait BaseFlinkTableRewritingLC extends BaseFlinkRewriting {
       ))
       .build()
 
-    tableEnvironment.getConfig setPlannerConfig(calciteConfig)
+    tableEnvironment.getConfig().setPlannerConfig(calciteConfig)
   }
 
   private def getResultSinkPath(fileName: String, fileNumber: Int, jobName: String) = {
