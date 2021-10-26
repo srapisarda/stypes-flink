@@ -210,12 +210,13 @@ trait BaseFlinkTableRewritingLC extends BaseFlinkRewriting {
   def changeCalciteConfig(tableEnvironment: TableEnvironment) = {
     //     change calcite configuration
     val calciteConfig: CalciteConfig = new CalciteConfigBuilder()
-      .addDecoRuleSet(RuleSets.ofList(DataSetJoinRule.INSTANCE))
-      .addDecoRuleSet(RuleSets.ofList(DataSetUnionRule.INSTANCE,
-        DataSetScanRule.INSTANCE),
-//        DataStreamRetractionRules.ACCMODE_INSTANCE,
+      .addDecoRuleSet(RuleSets.ofList(
+        DataSetJoinRule.INSTANCE,
+        DataSetUnionRule.INSTANCE,
+        DataSetScanRule.INSTANCE,
+        DataStreamRetractionRules.ACCMODE_INSTANCE
 //        FlinkFilterJoinRule.FILTER_ON_JOIN,
-      )
+      ))
       .build()
 
     tableEnvironment.getConfig setPlannerConfig(calciteConfig)
