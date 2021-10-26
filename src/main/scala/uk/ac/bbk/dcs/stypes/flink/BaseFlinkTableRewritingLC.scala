@@ -10,8 +10,9 @@ import org.apache.flink.table.api.{DataTypes, EnvironmentSettings, Table, TableE
 import org.apache.flink.table.calcite.{CalciteConfig, CalciteConfigBuilder}
 import org.apache.flink.table.catalog.stats.CatalogTableStatistics
 import org.apache.flink.table.catalog.{Catalog, ConnectorCatalogTable, ObjectPath}
-import org.apache.flink.table.plan.rules.dataSet.{DataSetJoinRule, DataSetUnionRule}
+import org.apache.flink.table.plan.rules.dataSet.{DataSetJoinRule, DataSetScanRule, DataSetUnionRule}
 import org.apache.flink.table.plan.rules.datastream.DataStreamRetractionRules
+import org.apache.flink.table.plan.rules.logical.FlinkFilterJoinRule
 import org.apache.flink.table.sinks.{CsvTableSink, TableSink}
 import org.apache.flink.table.sources.{CsvTableSource, TableSource}
 import org.apache.flink.types.Row
@@ -211,11 +212,13 @@ trait BaseFlinkTableRewritingLC extends BaseFlinkRewriting {
     val calciteConfig: CalciteConfig = new CalciteConfigBuilder()
       .addDecoRuleSet(RuleSets.ofList(DataSetJoinRule.INSTANCE))
       .addDecoRuleSet(RuleSets.ofList(DataSetUnionRule.INSTANCE,
-        DataStreamRetractionRules.ACCMODE_INSTANCE)
+        DataSetScanRule.INSTANCE),
+//        DataStreamRetractionRules.ACCMODE_INSTANCE,
+//        FlinkFilterJoinRule.FILTER_ON_JOIN,
       )
       .build()
 
-    tableEnvironment.getConfig.setPlannerConfig(calciteConfig)
+    tableEnvironment.getConfig setPlannerConfig(calciteConfig)
   }
 
   private def getResultSinkPath(fileName: String, fileNumber: Int, jobName: String) = {

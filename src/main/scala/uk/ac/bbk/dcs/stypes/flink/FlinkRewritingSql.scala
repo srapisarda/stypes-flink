@@ -13,6 +13,7 @@ object FlinkRewritingSql extends BaseFlinkTableRewritingLC {
           enableOptimisation: Boolean = true, sql:String = "" ): Unit = {
 
     def tableRewritingEvaluation(fileNumber: Int, jobName: String,  tableEnv: TableEnvironment): Table = {
+      println(s"sql argument: $sql")
       lazy val p1 = tableEnv.sqlQuery(sql)
       p1
     }
