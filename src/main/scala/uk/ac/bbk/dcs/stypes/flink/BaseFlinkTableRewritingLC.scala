@@ -115,7 +115,7 @@ trait BaseFlinkTableRewritingLC extends BaseFlinkRewriting {
 
     val p1 = tableRewritingEvaluation.apply(fileNumber, jobName, tableEnv)
     val catalog = tableEnv.getCatalog(catalogName)
-    tableEnv.executeSql( s"SET 'pipeline.name'= '$jobName'")
+
     println(p1.explain())
     if (catalog.isPresent) {
 
@@ -127,6 +127,7 @@ trait BaseFlinkTableRewritingLC extends BaseFlinkRewriting {
 //        val stmtSet = tableEnv.createStatementSet
 //      tableEnv.executeInsert(getSinkTableName(tableNameSinkCountPrefix, catalog.get()))
 //      stmtSet.execute()
+      env.execute(jobName)
     }
   }
 
