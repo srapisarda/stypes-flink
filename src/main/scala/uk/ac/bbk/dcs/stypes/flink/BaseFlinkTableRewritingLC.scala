@@ -120,13 +120,13 @@ trait BaseFlinkTableRewritingLC extends BaseFlinkRewriting {
 
     if (catalog.isPresent) {
       p1.executeInsert(getSinkTableName(tableNameSink1Prefix, catalog.get()))
-//      val result =  p1.execute()
-//      p1.insertInto(getSinkTableName(tableNameSink1Prefix, catalog.get()))
-
-      val res = p1.select( $("y").count )
-      res.executeInsert(getSinkTableName(tableNameSinkCountPrefix, catalog.get()))
+////      val result =  p1.execute()
+////      p1.insertInto(getSinkTableName(tableNameSink1Prefix, catalog.get()))
+//        val coll = res.collect().asScala.foldLeft(0)( (acc, _) => acc+1 )
+//        val stmtSet = tableEnv.createStatementSet
+//      tableEnv.executeInsert(getSinkTableName(tableNameSinkCountPrefix, catalog.get()))
+//      stmtSet.execute()
     }
-    //tableEnv.execute(s"$jobName")
   }
 
   def makeTableEnvironment(fileNumber: Int, jobName: String, optimisationEnabled: Boolean = true,
