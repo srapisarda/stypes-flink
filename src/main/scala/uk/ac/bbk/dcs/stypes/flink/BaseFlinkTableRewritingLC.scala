@@ -127,7 +127,7 @@ trait BaseFlinkTableRewritingLC extends BaseFlinkRewriting {
 //        val stmtSet = tableEnv.createStatementSet
 //      tableEnv.executeInsert(getSinkTableName(tableNameSinkCountPrefix, catalog.get()))
 //      stmtSet.execute()
-      env.execute(jobName)
+      //env.execute(jobName)
     }
   }
 
@@ -229,7 +229,7 @@ trait BaseFlinkTableRewritingLC extends BaseFlinkRewriting {
       ))
       .build()
 
-    tableEnvironment.getConfig().setPlannerConfig(calciteConfig)
+    tableEnvironment.getConfig.setPlannerConfig(calciteConfig)
   }
 
   private def getResultSinkPath(fileName: String, fileNumber: Int, jobName: String) = {
