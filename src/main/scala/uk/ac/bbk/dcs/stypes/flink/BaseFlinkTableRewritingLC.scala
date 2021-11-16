@@ -7,7 +7,7 @@ import org.apache.flink.calcite.shaded.com.fasterxml.jackson.databind
 import org.apache.flink.calcite.shaded.com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.flink.core.fs.{FileSystem, Path}
 import org.apache.flink.table.api.Expressions.$
-import org.apache.flink.table.api.{DataTypes, EnvironmentSettings, Table, TableEnvironment}
+import org.apache.flink.table.api.{DataTypes, EnvironmentSettings, ExplainDetail, Table, TableEnvironment}
 import org.apache.flink.table.calcite.{CalciteConfig, CalciteConfigBuilder}
 import org.apache.flink.table.catalog.stats.CatalogTableStatistics
 import org.apache.flink.table.catalog.{Catalog, ConnectorCatalogTable, ObjectPath}
@@ -44,11 +44,11 @@ trait BaseFlinkTableRewritingLC extends BaseFlinkRewriting {
   val sources: List[ObjectPath] = List(pathS, pathA, pathB, pathR, pathT)
   val sinkPrefixes: List[String] = List(tableNameSink1Prefix, tableNameSink2Prefix, tableNameSinkCountPrefix)
   private val isLocalResources = Configuration.getEnvironment == RewritingEnvironment.Local.toString.toLowerCase()
-  private val pathToBenchmarkTableNDL_SQL = Configuration.getDataPath
-  //    if (isLocalResources)
-  //      "/" + pathToBenchmarkNDL_SQL.replace("src/test/resources/", "")
-  //    else
-  //      pathToBenchmarkNDL_SQL
+  private val pathToBenchmarkTableNDL_SQL =  //Configuration.getDataPath
+      if (isLocalResources)
+        "/" + pathToBenchmarkNDL_SQL.replace("src/test/resources/", "")
+      else
+        Configuration.getDataPath
 
   private val defaultCatalogStatistics: Map[(Int, ObjectPath), CatalogStatistics] = Map(
     (1, pathS) -> CatalogStatistics(0, 1, 0, 0),
@@ -116,7 +116,7 @@ trait BaseFlinkTableRewritingLC extends BaseFlinkRewriting {
     val p1 = tableRewritingEvaluation.apply(fileNumber, jobName, tableEnv)
     val catalog = tableEnv.getCatalog(catalogName)
 
-    println(p1.explain())
+    println(p1.explain(ExplainDetail.ESTIMATED_COST, ExplainDetail.CHANGELOG_MODE))
     if (catalog.isPresent) {
 
       val stmtSet = tableEnv.createStatementSet
@@ -137,10 +137,6 @@ trait BaseFlinkTableRewritingLC extends BaseFlinkRewriting {
     tableEnv.getConfig // access high-level configuration
       .getConfiguration // set low-level key-value options
       .setString("table.optimizer.join-reorder-enabled", if (optimisationEnabled) "true" else "false")
-
-    tableEnv.getConfig // access high-level configuration
-      .getConfiguration .setString("table.optimizer.reuse-sub-plan-enabled", "false")
-
 
     val catalog: Catalog = tableEnv.getCatalog(tableEnv.getCurrentCatalog).orElse(null)
 
@@ -224,12 +220,12 @@ trait BaseFlinkTableRewritingLC extends BaseFlinkRewriting {
         DataSetUnionRule.INSTANCE,
         DataSetScanRule.INSTANCE,
         DataStreamRetractionRules.ACCMODE_INSTANCE,
-        FlinkFilterJoinRule.FILTER_ON_JOIN,
-        JoinCommuteRule.INSTANCE,
-        JoinAssociateRule.INSTANCE,
-        JoinToMultiJoinRule.INSTANCE,
-        LoptOptimizeJoinRule.INSTANCE,
-        MultiJoinOptimizeBushyRule.INSTANCE
+        FlinkFilterJoinRule.FILTER_ON_JOIN
+//        JoinCommuteRule.INSTANCE,
+//        JoinAssociateRule.INSTANCE,
+//        JoinToMultiJoinRule.INSTANCE,
+//        LoptOptimizeJoinRule.INSTANCE,
+//        MultiJoinOptimizeBushyRule.INSTANCE
       ))
       .build()
 
