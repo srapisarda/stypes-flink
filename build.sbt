@@ -4,7 +4,7 @@ version := "1.0"
 
 scalaVersion := "2.12.10"
 
-val flinkVersion = "1.11.2"
+val flinkVersion = "1.13.3"
 
 resolvers += Resolver.mavenLocal
 

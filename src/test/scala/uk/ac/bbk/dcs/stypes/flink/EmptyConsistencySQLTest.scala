@@ -21,8 +21,8 @@ import scala.util.Try
   */
 class EmptyConsistencySQLTest extends FunSpec with BaseFlinkTest {
   val calciteConfigBuilder = new CalciteConfigBuilder()
-  val ruleSets: RuleSet = RuleSets.ofList(
-    LoptOptimizeJoinRule.INSTANCE)
+//  val ruleSets: RuleSet = RuleSets.ofList(
+//    LoptOptimizeJoinRule.INSTANCE)
 //  calciteConfigBuilder.addLogicalOptRuleSet(ruleSets)
   val tableConfig: TableConfig = new TableConfig()
 //  tableConfig.setCalciteConfig(calciteConfigBuilder.build())
@@ -30,8 +30,8 @@ class EmptyConsistencySQLTest extends FunSpec with BaseFlinkTest {
 
 
   private val fileNumber = 1
-  tableEnv.registerTableSource("R", getDataSourceR(fileNumber))
-  tableEnv.registerTableSource("S", getDataSourceS(fileNumber))
+//  tableEnv.registerTableSource("R", getDataSourceR(fileNumber))
+//  tableEnv.registerTableSource("S", getDataSourceS(fileNumber))
 
 
   private val r = tableEnv.scan("R")
