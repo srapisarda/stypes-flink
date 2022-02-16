@@ -15,6 +15,7 @@ libraryDependencies ++= Seq(
   ,"org.apache.flink" %% "flink-table-planner-blink" % flinkVersion
   ,"org.apache.flink" %% "flink-table-planner" %  flinkVersion
   ,"org.apache.flink"  % "flink-hadoop-fs" % flinkVersion
+  ,"org.apache.flink" % "flink-s3-fs-hadoop" % flinkVersion
   ,"com.typesafe" % "config" % "1.4.0"
   ,"com.google.guava" % "guava" % "28.0-jre"
   ,"com.google.code.gson" % "gson" % "2.8.6"
