@@ -4,7 +4,7 @@ version := "1.0"
 
 scalaVersion := "2.12.10"
 
-val flinkVersion = "1.11.2"
+val flinkVersion = "1.13.3"
 
 resolvers += Resolver.mavenLocal
 
@@ -23,4 +23,12 @@ libraryDependencies ++= Seq(
   ,"junit" % "junit" % "4.10" % "test"
   ,"ch.qos.logback" % "logback-classic" % "1.2.3"
   ,"mysql" % "mysql-connector-java" % "5.1.46"
+  ,"com.github.srapisarda" %% "stypes" %  "1.1.1"
 )
+
+assemblyExcludedJars in assembly := {
+  val cp = (fullClasspath in assembly).value
+  cp filter { f =>
+    f.data.getName.contains("flink") || f.data.getName.contains("common") || f.data.getName.contains("logback")
+  }
+}

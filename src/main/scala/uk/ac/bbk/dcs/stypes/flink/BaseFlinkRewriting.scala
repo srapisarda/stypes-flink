@@ -122,6 +122,7 @@ trait BaseFlinkRewriting {
   def execute(fileNumber: Int, serial: String, qName: String, f: Int => DataSet[(String, String)]): Unit = {
     val startTime = System.nanoTime()
     distinctSink(f.apply(fileNumber), fileNumber, serial, startTime, qName)
+    env.execute(s"evaluating $qName")
   }
 
   def execute2(fileNumber: Int, serial: String, qName: String, f: Int => DataSet[(String, String)]): Unit = {
@@ -141,22 +142,20 @@ trait BaseFlinkRewriting {
   }
 
   def distinctSink(p1: DataSet[(String, String)], fileNumber: Int, serial: String, startTime: Long, qName: String): Unit = {
-    val p1_distinct = p1.distinct()
-
     val postfix = s"ttl-$fileNumber-par-${env.getParallelism}-${new Date().getTime}"
     val resultPath = s"$pathToBenchmarkNDL_SQL/data/results/$qName/$serial/results-$postfix"
-    p1_distinct.writeAsCsv(resultPath)
+    p1.distinct().writeAsCsv(resultPath)
 
-    val count: Long = p1_distinct.count
-    val elapsed = (System.nanoTime() - startTime) / 1000000
-    log.info(s"elapsed time for $postfix is: $elapsed")
+//    val count: Long = p1_distinct.count
+//    val elapsed = (System.nanoTime() - startTime) / 1000000
+//    log.info(s"elapsed time for $postfix is: $elapsed")
 
-    val qe: DataSet[String] = env.fromElements(fileNumber.toString, env.getParallelism.toString, elapsed.toString, count.toString, resultPath)
-    qe.writeAsText(s"$pathToBenchmarkNDL_SQL/data/results/$qName/$serial/result-$postfix-txt")
+//    val qe: DataSet[String] = env.fromElements(fileNumber.toString, env.getParallelism.toString, elapsed.toString, count.toString, resultPath)
+//    qe.writeAsText(s"$pathToBenchmarkNDL_SQL/data/results/$qName/$serial/result-$postfix-txt")
 
-    val count2: Long = p1_distinct.count
+//    val count2: Long = p1_distinct.count
 
-    log.info(s"p1_distinct count: $count, $count2")
+//    log.info(s"p1_distinct count: $count, $count2")
   }
 
   def sink(p1: DataSet[(String, String)], fileNumber: Int, serial: String, startTime: Long, qName: String): Unit = {

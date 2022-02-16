@@ -1,36 +1,38 @@
 package uk.ac.bbk.dcs.stypes.flink
 
-import java.io.{BufferedReader, IOException, InputStreamReader, OutputStreamWriter}
-import java.util.UUID
-
+import org.apache.calcite.rel.rules.{JoinAssociateRule, JoinCommuteRule, JoinToMultiJoinRule, LoptOptimizeJoinRule, MultiJoinOptimizeBushyRule}
 import org.apache.calcite.tools.RuleSets
 import org.apache.flink.api.common.typeinfo.{TypeInformation, Types}
 import org.apache.flink.calcite.shaded.com.fasterxml.jackson.databind
 import org.apache.flink.calcite.shaded.com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.flink.core.fs.{FileSystem, Path}
-import org.apache.flink.table.api.{DataTypes, EnvironmentSettings, Table, TableEnvironment}
+import org.apache.flink.table.api.Expressions.$
+import org.apache.flink.table.api.{DataTypes, EnvironmentSettings, ExplainDetail, Table, TableEnvironment}
 import org.apache.flink.table.calcite.{CalciteConfig, CalciteConfigBuilder}
 import org.apache.flink.table.catalog.stats.CatalogTableStatistics
 import org.apache.flink.table.catalog.{Catalog, ConnectorCatalogTable, ObjectPath}
-import org.apache.flink.table.plan.rules.dataSet.{DataSetJoinRule, DataSetUnionRule}
+import org.apache.flink.table.plan.rules.dataSet.{DataSetJoinRule, DataSetScanRule, DataSetUnionRule}
 import org.apache.flink.table.plan.rules.datastream.DataStreamRetractionRules
+import org.apache.flink.table.plan.rules.logical.FlinkFilterJoinRule
 import org.apache.flink.table.sinks.{CsvTableSink, TableSink}
 import org.apache.flink.table.sources.{CsvTableSource, TableSource}
 import org.apache.flink.types.Row
 import uk.ac.bbk.dcs.stypes.flink.common.{CatalogStatistics, Configuration, RewritingEnvironment}
 
+import java.io.{BufferedReader, IOException, InputStreamReader, OutputStreamWriter}
+import java.util.UUID
 import scala.collection.JavaConverters._
 import scala.io.Source
 
 
-trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
+trait BaseFlinkTableRewritingLC extends BaseFlinkRewriting {
   val catalogName = "S_CAT"
   val databaseName = "default_database"
-  private val tableNameS = "S"
-  private val tableNameA = "A"
-  private val tableNameR = "R"
-  private val tableNameB = "B"
-  private val tableNameT = "T"
+  private val tableNameS = "s"
+  private val tableNameA = "a"
+  private val tableNameR = "r"
+  private val tableNameB = "b"
+  private val tableNameT = "t"
   private val tableNameSink1Prefix = s"sink_1"
   private val tableNameSink2Prefix = s"sink_2"
   private val tableNameSinkCountPrefix = s"sink_count"
@@ -42,11 +44,11 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
   val sources: List[ObjectPath] = List(pathS, pathA, pathB, pathR, pathT)
   val sinkPrefixes: List[String] = List(tableNameSink1Prefix, tableNameSink2Prefix, tableNameSinkCountPrefix)
   private val isLocalResources = Configuration.getEnvironment == RewritingEnvironment.Local.toString.toLowerCase()
-  private val pathToBenchmarkTableNDL_SQL = Configuration.getDataPath
-  //    if (isLocalResources)
-  //      "/" + pathToBenchmarkNDL_SQL.replace("src/test/resources/", "")
-  //    else
-  //      pathToBenchmarkNDL_SQL
+  private val pathToBenchmarkTableNDL_SQL =  //Configuration.getDataPath
+      if (isLocalResources)
+        "/" + pathToBenchmarkNDL_SQL.replace("src/test/resources/", "")
+      else
+        Configuration.getDataPath
 
   private val defaultCatalogStatistics: Map[(Int, ObjectPath), CatalogStatistics] = Map(
     (1, pathS) -> CatalogStatistics(0, 1, 0, 0),
@@ -104,8 +106,6 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
     (9, pathT) -> CatalogStatistics(1, 1, 3, 3)
   )
 
-  import com.google.gson.{Gson, GsonBuilder}
-
   val objectMapper: ObjectMapper = new databind.ObjectMapper()
 
   private val settings = EnvironmentSettings.newInstance().useBlinkPlanner().inBatchMode().build()
@@ -116,15 +116,19 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
     val p1 = tableRewritingEvaluation.apply(fileNumber, jobName, tableEnv)
     val catalog = tableEnv.getCatalog(catalogName)
 
-    println(tableEnv.explain(p1))
-
+    println(p1.explain(ExplainDetail.ESTIMATED_COST, ExplainDetail.CHANGELOG_MODE))
     if (catalog.isPresent) {
-      p1.insertInto(getSinkTableName(tableNameSink1Prefix, catalog.get()))
-      val res = p1.select("y.count")
-      res.insertInto(getSinkTableName(tableNameSinkCountPrefix, catalog.get()))
-    }
-    tableEnv.execute(s"$jobName as ")
 
+      val stmtSet = tableEnv.createStatementSet
+      p1.executeInsert(getSinkTableName(tableNameSink1Prefix, catalog.get()))
+////      val result =  p1.execute()
+////      p1.insertInto(getSinkTableName(tableNameSink1Prefix, catalog.get()))
+//        val coll = res.collect().asScala.foldLeft(0)( (acc, _) => acc+1 )
+//        val stmtSet = tableEnv.createStatementSet
+//      tableEnv.executeInsert(getSinkTableName(tableNameSinkCountPrefix, catalog.get()))
+//      stmtSet.execute()
+      //env.execute(jobName)
+    }
   }
 
   def makeTableEnvironment(fileNumber: Int, jobName: String, optimisationEnabled: Boolean = true,
@@ -211,10 +215,18 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
   def changeCalciteConfig(tableEnvironment: TableEnvironment) = {
     //     change calcite configuration
     val calciteConfig: CalciteConfig = new CalciteConfigBuilder()
-      .addDecoRuleSet(RuleSets.ofList(DataSetJoinRule.INSTANCE))
-      .addDecoRuleSet(RuleSets.ofList(DataSetUnionRule.INSTANCE,
-        DataStreamRetractionRules.ACCMODE_INSTANCE)
-      )
+      .addDecoRuleSet(RuleSets.ofList(
+        DataSetJoinRule.INSTANCE,
+        DataSetUnionRule.INSTANCE,
+        DataSetScanRule.INSTANCE,
+        DataStreamRetractionRules.ACCMODE_INSTANCE,
+        FlinkFilterJoinRule.FILTER_ON_JOIN
+//        JoinCommuteRule.INSTANCE,
+//        JoinAssociateRule.INSTANCE,
+//        JoinToMultiJoinRule.INSTANCE,
+//        LoptOptimizeJoinRule.INSTANCE,
+//        MultiJoinOptimizeBushyRule.INSTANCE
+      ))
       .build()
 
     tableEnvironment.getConfig.setPlannerConfig(calciteConfig)
@@ -234,7 +246,7 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
 
   private def getExternalCatalogSinkTable(fileName: String, fileNumber: Int, jobName: String): TableSink[Row] = {
     val csvTableSink = new CsvTableSink(getResultSinkPath(fileName, fileNumber, jobName))
-    val fieldNames: Array[String] = if (fileName.startsWith(tableNameSinkCountPrefix)) Array("X") else Array("X", "Y")
+    val fieldNames: Array[String] = if (fileName.startsWith(tableNameSinkCountPrefix)) Array("x") else Array("x", "y")
     val fieldTypes: Array[TypeInformation[_]] = if (fileName.startsWith(tableNameSinkCountPrefix)) Array(Types.LONG) else Array(Types.STRING, Types.STRING)
     csvTableSink.configure(fieldNames, fieldTypes)
   }
@@ -244,10 +256,10 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
     val resourcePath = filePath // this.getClass.getResource(filePath).getPath
     val builder = CsvTableSource.builder()
     builder.path(resourcePath)
-    builder.field("X", DataTypes.STRING)
+    builder.field("x", DataTypes.STRING)
 
     if (!(fileName == tableNameA || fileName == tableNameB))
-      builder.field("Y", DataTypes.STRING)
+      builder.field("y", DataTypes.STRING)
 
     builder.build()
   }
@@ -298,7 +310,7 @@ trait BaseFlinkTableRewriting extends BaseFlinkRewriting {
   }
 
   def getFilePathAsResource(fileNumber: Int, name: String): String =
-    s"$pathToBenchmarkTableNDL_SQL/data/csv/$fileNumber.ttl-$name.csv"
+    s"$pathToBenchmarkTableNDL_SQL/data/csv/$fileNumber.ttl-${name.toUpperCase}.csv"
 
   def getFilePathFolderAsResource: String =
     s"$pathToBenchmarkTableNDL_SQL/data/csv/"

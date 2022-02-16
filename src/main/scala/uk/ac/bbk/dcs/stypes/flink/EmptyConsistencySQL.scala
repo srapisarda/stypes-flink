@@ -21,8 +21,8 @@ object EmptyConsistencySQL extends BaseFlinkRewriting {
 
   def run(fileNumber: Int, serial: String = UUID.randomUUID().toString): Unit = {
     val rDataSource: CsvTableSource = getDataSourceR(fileNumber)
-    tableEnv.registerTableSource("R", rDataSource)
-    tableEnv.registerTableSource("S", getDataSourceR(fileNumber))
+//    tableEnv.registerTableSource("R", rDataSource)
+//    tableEnv.registerTableSource("S", getDataSourceR(fileNumber))
 
 
     executeAsTable(fileNumber, serial, "empty-consistency", _ => {
