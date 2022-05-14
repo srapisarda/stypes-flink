@@ -55,55 +55,55 @@ trait BaseFlinkTableRewritingLC extends BaseFlinkRewriting {
     (1, pathA) -> CatalogStatistics(59, 1, 232, 464),
     (1, pathB) -> CatalogStatistics(48, 1, 183, 366),
     (1, pathR) -> CatalogStatistics(61390, 1, 477853, 955706),
-    (1, pathT) -> CatalogStatistics(1, 1, 3, 3),
+    (1, pathT) -> CatalogStatistics(1, 1, 8, 8),
 
     (2, pathS) -> CatalogStatistics(0, 1, 0, 0),
     (2, pathA) -> CatalogStatistics(22, 1, 107, 214),
     (2, pathB) -> CatalogStatistics(31, 1, 150, 300),
     (2, pathR) -> CatalogStatistics(64103, 1, 612911, 1225822),
-    (2, pathT) -> CatalogStatistics(1, 1, 3, 3),
+    (2, pathT) -> CatalogStatistics(1, 1, 8, 8),
 
     (3, pathS) -> CatalogStatistics(0, 1, 0, 0),
     (3, pathA) -> CatalogStatistics(57, 1, 277, 554),
     (3, pathB) -> CatalogStatistics(47, 1, 226, 452),
     (3, pathR) -> CatalogStatistics(256699, 1, 2510481, 5020962),
-    (3, pathT) -> CatalogStatistics(1, 1, 3, 3),
+    (3, pathT) -> CatalogStatistics(1, 1, 8, 8),
 
     (4, pathS) -> CatalogStatistics(0, 1, 0, 0),
     (4, pathA) -> CatalogStatistics(248, 1, 1353, 2706),
     (4, pathB) -> CatalogStatistics(253, 1, 1383, 2766),
     (4, pathR) -> CatalogStatistics(1026526, 1, 11178724, 22357448),
-    (4, pathT) -> CatalogStatistics(1, 1, 3, 3),
+    (4, pathT) -> CatalogStatistics(1, 1, 8, 8),
 
     (5, pathS) -> CatalogStatistics(0, 1, 0, 0),
     (5, pathA) -> CatalogStatistics(336, 1, 1892, 3784),
     (5, pathB) -> CatalogStatistics(357, 1, 2013, 4026),
     (5, pathR) -> CatalogStatistics(2307054, 1, 25975560, 51951120),
-    (5, pathT) -> CatalogStatistics(1, 1, 3, 3),
+    (5, pathT) -> CatalogStatistics(1, 1, 8, 8),
 
     (6, pathS) -> CatalogStatistics(0, 1, 0, 0),
-    (6, pathA) -> CatalogStatistics(492, 1, 492, 5614),
+    (6, pathA) -> CatalogStatistics(492, 1, 2807, 5614),
     (6, pathB) -> CatalogStatistics(463, 1, 2654, 5308),
     (6, pathR) -> CatalogStatistics(4101642, 1, 46940747, 93881494),
-    (6, pathT) -> CatalogStatistics(1, 1, 3, 3),
+    (6, pathT) -> CatalogStatistics(1, 1, 8, 8),
 
     (7, pathS) -> CatalogStatistics(0, 1, 0, 0),
     (7, pathA) -> CatalogStatistics(600, 1, 3472, 6944),
     (7, pathB) -> CatalogStatistics(565, 1, 2654, 5308),
     (7, pathR) -> CatalogStatistics(6410095, 1, 46940747, 93881494),
-    (7, pathT) -> CatalogStatistics(1, 1, 3, 3),
+    (7, pathT) -> CatalogStatistics(1, 1, 8, 8),
 
     (8, pathS) -> CatalogStatistics(0, 1, 0, 0),
-    (8, pathA) -> CatalogStatistics(492, 1, 2807, 5614),
-    (8, pathB) -> CatalogStatistics(463, 1, 2654, 5308),
-    (8, pathR) -> CatalogStatistics(4101642, 1, 46940747, 93881494),
-    (8, pathT) -> CatalogStatistics(1, 1, 3, 3),
+    (8, pathA) -> CatalogStatistics(717, 1, 4174, 4174),
+    (8, pathB) -> CatalogStatistics(773, 1, 4496, 4496),
+    (8, pathR) -> CatalogStatistics(9228877, 1, 107328174, 107328174),
+    (8, pathT) -> CatalogStatistics(1, 1, 8, 8),
 
     (9, pathS) -> CatalogStatistics(0, 1, 0, 0),
-    (9, pathA) -> CatalogStatistics(492, 1, 2807, 5614),
-    (9, pathB) -> CatalogStatistics(463, 1, 2654, 5308),
-    (9, pathR) -> CatalogStatistics(4101642, 1, 46940747, 93881494),
-    (9, pathT) -> CatalogStatistics(1, 1, 3, 3)
+    (9, pathA) -> CatalogStatistics(913, 1, 5355, 5355),
+    (9, pathB) -> CatalogStatistics(886, 1, 5165, 5355),
+    (9, pathR) -> CatalogStatistics(12563043, 1, 146767325, 146767325),
+    (9, pathT) -> CatalogStatistics(1, 1, 8, 8)
   )
 
   val objectMapper: ObjectMapper = new databind.ObjectMapper()
