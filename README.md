@@ -57,3 +57,10 @@ In Apache Flink it is possible to decide which is the degree of parallelization 
 It is important to know that the level of parallelism cannot be bigger of the total number of **vcores** the cluster contains. 
 Moreover, it is not possible to use all the cluster **vcores** because some of them can be busy in executing other tasks, 
 for example, some can be dedicated to Hadoop some administration functionality.
+
+## use aws configuration
+```shell
+./target/scala-2.12/stypes-flink_2.12-1.0.jar \
+  -Dconfig.resource=application-aws.conf 
+  
+```
