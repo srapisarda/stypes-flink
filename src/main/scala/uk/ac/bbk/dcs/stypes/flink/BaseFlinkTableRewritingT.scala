@@ -36,7 +36,7 @@ trait BaseFlinkTableRewritingT extends BaseFlinkRewriting {
 
   private val tableStructure = Map(
     tableNameEmployee -> List("id", "name", "manager_id"),
-    tableNameEmployeeProject -> List("employ_id", "project_id", "until"),
+    tableNameEmployeeProject -> List("employee_id", "project_id", "until"),
     tableNameProject -> List("id", "name")
   )
 
