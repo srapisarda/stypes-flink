@@ -12,7 +12,7 @@ object Thesis {
     val DEFAULT_TTL_FILE_NUMBER = 1
 
     def run(fileNumber: Int, serial: String = UUID.randomUUID().toString, enableOptimisation: Boolean = true): Unit = {
-      val jobName = "sql-q22-with-ex-no-p3-cl"
+      val jobName = "thesis-example-01"
       val tableEnv: TableEnvironment = makeTableEnvironment(fileNumber, jobName, enableOptimisation)
       executeTableRewriting(fileNumber, serial, jobName, tableEnv, tableRewritingEvaluation)
     }
