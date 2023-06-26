@@ -6,9 +6,9 @@ import org.apache.flink.table.api.{Table, TableEnvironment}
 import java.util.UUID
 import scala.util.Try
 
-object Thesis {
-  //uk.ac.bbk.dcs.stypes.flink.ThesisExample01
-  object ThesisExample01 extends BaseFlinkTableRewritingT {
+//uk.ac.bbk.dcs.stypes.flink.Thesis
+object Thesis extends BaseFlinkTableRewritingT  {
+
     val DEFAULT_TTL_FILE_NUMBER = 1
 
     def run(fileNumber: Int, serial: String = UUID.randomUUID().toString, enableOptimisation: Boolean = true): Unit = {
@@ -39,13 +39,11 @@ object Thesis {
     def main(args: Array[String]): Unit = {
       val fileNumber = if (args.isEmpty) DEFAULT_TTL_FILE_NUMBER else args(0).toInt
       if (args.length > 2) {
-        ThesisExample01.run(fileNumber, args(1), Try(args(2).toBoolean).getOrElse(true))
+        Thesis.run(fileNumber, args(1), Try(args(2).toBoolean).getOrElse(true))
       } else if (args.length > 1) {
-        ThesisExample01.run(fileNumber, args(1))
+        Thesis.run(fileNumber, args(1))
       } else {
-        ThesisExample01.run(fileNumber)
+        Thesis.run(fileNumber)
       }
     }
-  }
-
 }
