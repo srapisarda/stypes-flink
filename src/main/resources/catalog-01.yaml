@@ -1,0 +1,3 @@
+employee: [id, name, manager_id]
+project: [id, name]
+employee_project: [employee_id, project_id, until]

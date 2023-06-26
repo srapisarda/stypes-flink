@@ -24,6 +24,7 @@ libraryDependencies ++= Seq(
   ,"ch.qos.logback" % "logback-classic" % "1.2.3"
   ,"mysql" % "mysql-connector-java" % "5.1.46"
   //,"com.github.srapisarda" %% "stypes" %  "1.1.1"
+  ,"org.yaml" % "snakeyaml" % "2.0"
 )
 
 assemblyExcludedJars in assembly := {
