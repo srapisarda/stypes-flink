@@ -1,8 +1,6 @@
 package uk.ac.bbk.dcs.stypes.flink
 
 import org.apache.flink.table.api.{Table, TableEnvironment}
-
-
 import java.util.UUID
 import scala.util.Try
 
@@ -12,7 +10,7 @@ object Thesis extends BaseFlinkTableRewritingT  {
     val DEFAULT_TTL_FILE_NUMBER = 1
 
     def run(fileNumber: Int, serial: String = UUID.randomUUID().toString, enableOptimisation: Boolean = true): Unit = {
-      val jobName = "thesis-example-01"
+      val jobName = s"thesis-example-01_${env.getParallelism}-$serial"
       val tableEnv: TableEnvironment = makeTableEnvironment(fileNumber, jobName, enableOptimisation)
       executeTableRewriting(fileNumber, serial, jobName, tableEnv, tableRewritingEvaluation)
     }
