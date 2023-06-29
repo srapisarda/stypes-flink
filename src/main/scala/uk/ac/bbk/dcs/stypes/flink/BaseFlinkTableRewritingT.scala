@@ -67,9 +67,41 @@ trait BaseFlinkTableRewritingT extends BaseFlinkRewriting {
 
 
   private val defaultCatalogStatistics: Map[(Int, ObjectPath), CatalogStatistics] = Map(
-    (1, pathEmployee) -> CatalogStatistics(3, 3, 8, 8),
-    (1, pathProject) -> CatalogStatistics(2, 2, 8, 8),
-    (1, pathEmployeeProject) -> CatalogStatistics(2, 2, 8, 8)
+    (1, pathEmployee) -> CatalogStatistics(3,1,46,92),
+    (1, pathEmployeeProject) -> CatalogStatistics(2,1,41,82),
+    (1, pathProject) -> CatalogStatistics(2,1,31,62),
+
+    (2, pathEmployee) -> CatalogStatistics(100,1,1660,3320),
+    (2, pathEmployeeProject) -> CatalogStatistics(100,1,1300,2600),
+    (2, pathProject) -> CatalogStatistics(20,1,300,600),
+
+    (3, pathEmployee) -> CatalogStatistics(300,1,5460,10920),
+    (3, pathEmployeeProject) -> CatalogStatistics(300,1,4460,8920),
+    (3, pathProject) -> CatalogStatistics(60,1,940,1880),
+
+    (4, pathEmployee) -> CatalogStatistics(500,1,9540,19080),
+    (4, pathEmployeeProject) -> CatalogStatistics(500,1,7530,15060),
+    (4, pathProject) -> CatalogStatistics(100,1,1580,3160),
+
+    (5, pathEmployee) -> CatalogStatistics(800,1,15450,30900),
+    (5, pathEmployeeProject) -> CatalogStatistics(5800,1,12500,25000),
+    (5, pathProject) -> CatalogStatistics(160,1,2660,5320),
+
+    (6, pathEmployee) -> CatalogStatistics(1300,1,26170,52340),
+    (6, pathEmployeeProject) -> CatalogStatistics(1300,1,20800,41600),
+    (6, pathProject) -> CatalogStatistics(260,1,4460,8920),
+
+    (7, pathEmployee) -> CatalogStatistics(2100,1,44250,88500),
+    (7, pathEmployeeProject) -> CatalogStatistics(2100,1,45638,91276),
+    (7, pathProject) -> CatalogStatistics(420,1,7340,14680),
+
+    (8, pathEmployee) -> CatalogStatistics(3400,1,73630,147260),
+    (8, pathEmployeeProject) -> CatalogStatistics(3400,1,57640,115280),
+    (8, pathProject) -> CatalogStatistics(680,1,12020,24040),
+
+    (9, pathEmployee) -> CatalogStatistics(5500,1,121090,242180),
+    (8, pathEmployeeProject) -> CatalogStatistics(5500,1,94720,189440),
+    (8, pathProject) -> CatalogStatistics(1100,1,19780,39560),
 
   )
 

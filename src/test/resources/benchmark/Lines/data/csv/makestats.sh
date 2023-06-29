@@ -8,6 +8,6 @@ do
 rows=$(wc -l $file | awk '{print $1;}')
 #echo $rows
 bytes=$(wc -c $file | awk '{print $1;}')
-line="$file,$((rows+1)),$bytes,$((bytes*2))"
+line="$file,$((rows)),1,$bytes,$((bytes*2))"
 echo $line >> stats.csv
 done
