@@ -129,6 +129,8 @@ trait BaseFlinkTableRewritingT extends BaseFlinkRewriting {
       .getConfiguration // set low-level key-value options
       .setString("table.optimizer.join-reorder-enabled", if (optimisationEnabled) "true" else "false")
 
+    println(s"\n-----------+> is optimised: $optimisationEnabled\n")
+
     val catalog: Catalog = tableEnv.getCatalog(tableEnv.getCurrentCatalog).orElse(null)
 
     tableEnv.registerCatalog(catalogName, catalog)
