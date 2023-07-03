@@ -7,17 +7,14 @@ import scala.util.Try
 
 //uk.ac.bbk.dcs.stypes.flink.Thesis
 object Thesis extends BaseFlinkTableRewritingT {
-
   val DEFAULT_TTL_FILE_NUMBER = 1
 
   def main(args: Array[String]): Unit = {
     val fileNumber = if (args.isEmpty) DEFAULT_TTL_FILE_NUMBER else args(0).toInt
-    if (args.length > 2) {
-      Thesis.run(fileNumber, args(1), Try(args(2).toBoolean).getOrElse(true))
-    } else if (args.length > 1) {
-      Thesis.run(fileNumber, args(1))
+    if (args.length > 3) {
+      Thesis.run(fileNumber, args(1), Try(args(2).toBoolean).getOrElse(false), args(3) )
     } else {
-      Thesis.run(fileNumber)
+      throw new RuntimeException("Too low parameters. Please provide ")
     }
   }
 
