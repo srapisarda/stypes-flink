@@ -81,9 +81,9 @@ object FlinkRewriting01 extends BaseFlinkRewriting {
 object FlinkRewritingSql02 extends BaseFlinkTableRewriting {
   val DEFAULT_TTL_FILE_NUMBER = 3
 
-  def run(fileNumber: Int, serial: String = UUID.randomUUID().toString): Unit = {
+  def run(fileNumber: Int, serial: String = UUID.randomUUID().toString, optimisationEnabled: Boolean= false ): Unit = {
     val jobName = "sql-q02-ex"
-    val tableEnv: TableEnvironment = makeTableEnvironment(fileNumber, jobName)
+    val tableEnv: TableEnvironment = makeTableEnvironment(fileNumber, jobName, optimisationEnabled = optimisationEnabled)
     executeTableRewriting(fileNumber, serial, jobName, tableEnv, tableRewritingEvaluation)
   }
 
@@ -104,8 +104,10 @@ object FlinkRewritingSql02 extends BaseFlinkTableRewriting {
 
   def main(args: Array[String]): Unit = {
     val fileNumber = if (args.isEmpty) DEFAULT_TTL_FILE_NUMBER else args(0).toInt
+    if (args.length > 2) {
+      FlinkRewritingSql02.run(fileNumber, args(1), Try(args(2).toBoolean).getOrElse(false))
     if (args.length > 1)
-      FlinkRewritingSql02.run(fileNumber, args(1))
+      FlinkRewritingSql02.run(fileNumber,  args(1))
     else {
       FlinkRewritingSql02.run(fileNumber)
     }
